@@ -3,8 +3,7 @@ services:
     build: .
     container_name: homelab-dashboard
     restart: unless-stopped
-    ports:
-      - "5050:5050"
+    network_mode: host
     volumes:
       # Persist app data (saved services)
       - ./data:/app/data
