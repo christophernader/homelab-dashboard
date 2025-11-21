@@ -13,8 +13,8 @@ ICON_SOURCES = [
     },
     {
         "name": "icewhale",
-        "raw_base": "https://raw.githubusercontent.com/IceWhaleTech/AppIcon/main/",
-        "api_url": "https://api.github.com/repos/IceWhaleTech/AppIcon/contents",
+        "raw_base": "https://raw.githubusercontent.com/IceWhaleTech/AppIcon/main/all/",
+        "api_url": "https://api.github.com/repos/IceWhaleTech/AppIcon/contents/all",
     },
 ]
 
