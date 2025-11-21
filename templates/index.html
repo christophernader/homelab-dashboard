@@ -634,7 +634,7 @@
       tile.classList.add('ring-1', 'ring-mil-accent');
     });
 
-    // Form success
+    // Form success - keep sidebar open for adding multiple apps
     document.body.addEventListener('app_added', (e) => {
       const slot = document.getElementById('form-message');
       if (slot) {
@@ -643,12 +643,10 @@
         document.getElementById('icon-preview').src = '{{ default_icon }}';
         document.getElementById('icon-url').value = '{{ default_icon }}';
 
-        pendingClose = true;
+        // Clear message after 3 seconds but keep sidebar open
         setTimeout(() => {
           slot.innerHTML = '';
-          pendingClose = false;
-          if (editMode) toggleEditMode();
-        }, 1000);
+        }, 3000);
       }
     });
 
@@ -684,6 +682,8 @@
     document.body.addEventListener('htmx:afterSwap', (e) => {
       if (e.detail.target?.id === 'apps-container') {
         initSortable();
+        // Re-process HTMX attributes for delete buttons
+        htmx.process(document.getElementById('apps-container'));
       }
     });
 
