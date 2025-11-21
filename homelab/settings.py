@@ -69,7 +69,8 @@ def ensure_settings_file() -> None:
     """Ensure settings file exists with defaults."""
     DATA_DIR.mkdir(exist_ok=True)
     if not SETTINGS_FILE.exists():
-        save_settings(DEFAULT_SETTINGS)
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(DEFAULT_SETTINGS, f, indent=2)
 
 
 def load_settings() -> Dict[str, Any]:
