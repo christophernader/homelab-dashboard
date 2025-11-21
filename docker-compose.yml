@@ -1,0 +1,15 @@
+services:
+  homelab-dashboard:
+    build: .
+    container_name: homelab-dashboard
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    volumes:
+      # Persist app data (saved services)
+      - ./data:/app/data
+      # Mount Docker socket for container monitoring
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - PORT=5050
+      - TZ=America/New_York
