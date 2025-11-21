@@ -23,6 +23,14 @@ from homelab.widgets import (
     get_weather, get_hacker_news, get_reddit_top, get_crypto_prices,
     get_world_headlines, get_threat_status, get_usgs_earthquakes, get_reliefweb_reports
 )
+from homelab.settings import (
+    load_settings, save_settings, get_setting, set_setting,
+    get_widget_config, set_widget_enabled, get_integration_config, update_integration
+)
+from homelab.integrations import (
+    get_pihole_stats, get_portainer_stats, get_proxmox_stats,
+    get_speedtest_results, get_uptime_kuma_stats
+)
 
 app = Flask(__name__)
 sock = Sock(app)
@@ -198,6 +206,86 @@ def reorder_apps_route():
         reorder_apps(from_name, to_name, position)
         return "OK", 200
     return "Bad request", 400
+
+
+# ========== SETTINGS ROUTES ==========
+
+@app.route("/settings")
+def settings_page():
+    """Settings page for customization."""
+    settings = load_settings()
+    return render_template("settings.html", settings=settings)
+
+
+@app.post("/api/settings/widget/<name>/toggle")
+def toggle_widget(name: str):
+    """Toggle a widget on/off."""
+    current = get_widget_config(name).get('enabled', True)
+    set_widget_enabled(name, not current)
+    return "OK", 200
+
+
+@app.post("/api/settings/integration/<name>/toggle")
+def toggle_integration(name: str):
+    """Toggle an integration on/off."""
+    config = get_integration_config(name) or {}
+    update_integration(name, {'enabled': not config.get('enabled', False)})
+    return "OK", 200
+
+
+@app.post("/api/settings/integration/<name>")
+def save_integration(name: str):
+    """Save integration configuration."""
+    config = {}
+    for key in ['url', 'api_key', 'user', 'token_name', 'token_secret', 'slug']:
+        if key in request.form:
+            config[key] = request.form[key]
+    update_integration(name, config)
+    return "OK", 200
+
+
+@app.post("/api/settings/integration/<name>/test")
+def test_integration(name: str):
+    """Test an integration connection."""
+    testers = {
+        'pihole': get_pihole_stats,
+        'portainer': get_portainer_stats,
+        'proxmox': get_proxmox_stats,
+        'speedtest': get_speedtest_results,
+        'uptime_kuma': get_uptime_kuma_stats,
+    }
+    tester = testers.get(name)
+    if not tester:
+        return "Unknown integration", 400
+
+    result = tester()
+    if result and result.get('status') != 'error':
+        return "Connection successful", 200
+    return result.get('error', 'Connection failed') if result else "Connection failed", 400
+
+
+@app.post("/api/settings/<section>/<key>/toggle")
+def toggle_setting(section: str, key: str):
+    """Toggle a boolean setting."""
+    current = get_setting(f'{section}.{key}', True)
+    set_setting(f'{section}.{key}', not current)
+    return "OK", 200
+
+
+# ========== INTEGRATION WIDGET ROUTES ==========
+
+@app.get("/api/widgets/pihole")
+def widget_pihole():
+    """Get Pi-hole stats widget."""
+    stats = get_pihole_stats()
+    return render_template("partials/widget_pihole.html", pihole=stats)
+
+
+@app.get("/api/widgets/speedtest")
+def widget_speedtest():
+    """Get Speedtest widget."""
+    stats = get_speedtest_results()
+    return render_template("partials/widget_speedtest.html", speedtest=stats)
 
 
 @sock.route('/terminal')

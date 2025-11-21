@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | Homelab Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            mil: {
+              black: '#0a0a0a',
+              dark: '#111111',
+              card: '#151515',
+              border: '#252525',
+              text: '#e5e5e5',
+              muted: '#6b6b6b',
+              accent: '#f97316',
+              success: '#22c55e',
+              error: '#ef4444',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    body { -webkit-font-smoothing: antialiased; }
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #252525;
+      border: 1px solid #333;
+      transition: 0.3s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #6b6b6b;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider {
+      background-color: #f97316;
+      border-color: #f97316;
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background-color: #0a0a0a;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-mil-black text-mil-text font-sans">
+  <!-- Header -->
+  <header class="border-b border-mil-border bg-mil-dark">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="/" class="flex items-center gap-3 text-mil-muted hover:text-mil-text transition-colors">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span class="text-xs font-mono uppercase tracking-wider">Back to Dashboard</span>
+        </a>
+      </div>
+      <h1 class="text-sm font-mono uppercase tracking-widest text-mil-accent">Settings</h1>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- Tab Navigation -->
+    <div class="flex gap-2 border-b border-mil-border mb-8">
+      <button onclick="showTab('widgets')" id="tab-widgets" class="tab-btn px-4 py-3 text-xs font-mono uppercase tracking-wider border-b-2 border-mil-accent text-mil-accent">
+        <i class="fa-solid fa-puzzle-piece mr-2"></i> Widgets
+      </button>
+      <button onclick="showTab('integrations')" id="tab-integrations" class="tab-btn px-4 py-3 text-xs font-mono uppercase tracking-wider border-b-2 border-transparent text-mil-muted hover:text-mil-text">
+        <i class="fa-solid fa-plug mr-2"></i> Integrations
+      </button>
+      <button onclick="showTab('appearance')" id="tab-appearance" class="tab-btn px-4 py-3 text-xs font-mono uppercase tracking-wider border-b-2 border-transparent text-mil-muted hover:text-mil-text">
+        <i class="fa-solid fa-palette mr-2"></i> Appearance
+      </button>
+      <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-3 text-xs font-mono uppercase tracking-wider border-b-2 border-transparent text-mil-muted hover:text-mil-text">
+        <i class="fa-solid fa-gauge-high mr-2"></i> Dashboard
+      </button>
+    </div>
+
+    <!-- Widgets Tab -->
+    <div id="panel-widgets" class="tab-panel">
+      <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Widget Visibility</h2>
+        <p class="text-xs text-mil-muted">Enable or disable widgets on your dashboard</p>
+      </div>
+
+      <div class="grid gap-4">
+        {% for name, config in settings.widgets.items() %}
+        <div class="flex items-center justify-between p-4 bg-mil-card border border-mil-border">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-mil-dark border border-mil-border flex items-center justify-center text-mil-accent">
+              {% if name == 'weather' %}
+              <i class="fa-solid fa-cloud-sun"></i>
+              {% elif name == 'crypto' %}
+              <i class="fa-brands fa-bitcoin"></i>
+              {% elif name == 'news' %}
+              <i class="fa-brands fa-hacker-news"></i>
+              {% elif name == 'reddit' %}
+              <i class="fa-brands fa-reddit"></i>
+              {% elif name == 'threats' %}
+              <i class="fa-solid fa-shield-halved"></i>
+              {% elif name == 'earthquakes' %}
+              <i class="fa-solid fa-house-crack"></i>
+              {% elif name == 'system_stats' %}
+              <i class="fa-solid fa-server"></i>
+              {% elif name == 'docker' %}
+              <i class="fa-brands fa-docker"></i>
+              {% else %}
+              <i class="fa-solid fa-puzzle-piece"></i>
+              {% endif %}
+            </div>
+            <div>
+              <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">{{ name | replace('_', ' ') }}</h3>
+              <p class="text-[10px] text-mil-muted uppercase">Widget</p>
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox"
+                   {% if config.enabled %}checked{% endif %}
+                   hx-post="/api/settings/widget/{{ name }}/toggle"
+                   hx-trigger="change"
+                   hx-swap="none">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Integrations Tab -->
+    <div id="panel-integrations" class="tab-panel hidden">
+      <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Homelab Integrations</h2>
+        <p class="text-xs text-mil-muted">Connect your self-hosted apps for enhanced monitoring</p>
+      </div>
+
+      <div class="grid gap-6">
+        {% for name, config in settings.integrations.items() %}
+        <div class="bg-mil-card border border-mil-border p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-mil-dark border border-mil-border flex items-center justify-center text-mil-accent text-xl">
+                {% if name == 'pihole' %}
+                <i class="fa-solid fa-shield-halved"></i>
+                {% elif name == 'portainer' %}
+                <i class="fa-brands fa-docker"></i>
+                {% elif name == 'proxmox' %}
+                <i class="fa-solid fa-server"></i>
+                {% elif name == 'speedtest' %}
+                <i class="fa-solid fa-gauge-high"></i>
+                {% elif name == 'uptime_kuma' %}
+                <i class="fa-solid fa-heart-pulse"></i>
+                {% else %}
+                <i class="fa-solid fa-plug"></i>
+                {% endif %}
+              </div>
+              <div>
+                <h3 class="text-base font-mono uppercase tracking-wider text-mil-text">{{ name | replace('_', ' ') }}</h3>
+                <p class="text-[10px] text-mil-muted uppercase">
+                  {% if name == 'pihole' %}DNS Ad Blocker{% endif %}
+                  {% if name == 'portainer' %}Docker Management{% endif %}
+                  {% if name == 'proxmox' %}Virtualization Platform{% endif %}
+                  {% if name == 'speedtest' %}Network Speed Monitor{% endif %}
+                  {% if name == 'uptime_kuma' %}Service Monitoring{% endif %}
+                </p>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox"
+                     {% if config.enabled %}checked{% endif %}
+                     hx-post="/api/settings/integration/{{ name }}/toggle"
+                     hx-trigger="change"
+                     hx-swap="none">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <form hx-post="/api/settings/integration/{{ name }}"
+                hx-trigger="submit"
+                hx-swap="none"
+                class="grid gap-4 pt-4 border-t border-mil-border">
+
+            <div>
+              <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">URL</label>
+              <input type="text"
+                     name="url"
+                     value="{{ config.url or '' }}"
+                     placeholder="http://192.168.1.x:port"
+                     class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+            </div>
+
+            {% if name in ['pihole', 'portainer', 'speedtest'] %}
+            <div>
+              <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">API Key</label>
+              <input type="password"
+                     name="api_key"
+                     value="{{ config.api_key or '' }}"
+                     placeholder="Enter API key"
+                     class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+            </div>
+            {% endif %}
+
+            {% if name == 'proxmox' %}
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">User</label>
+                <input type="text"
+                       name="user"
+                       value="{{ config.user or '' }}"
+                       placeholder="root@pam"
+                       class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+              </div>
+              <div>
+                <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Token Name</label>
+                <input type="text"
+                       name="token_name"
+                       value="{{ config.token_name or '' }}"
+                       placeholder="api-token"
+                       class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Token Secret</label>
+              <input type="password"
+                     name="token_secret"
+                     value="{{ config.token_secret or '' }}"
+                     placeholder="Enter token secret"
+                     class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+            </div>
+            {% endif %}
+
+            {% if name == 'uptime_kuma' %}
+            <div>
+              <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Status Page Slug</label>
+              <input type="text"
+                     name="slug"
+                     value="{{ config.slug or 'default' }}"
+                     placeholder="default"
+                     class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+            </div>
+            {% endif %}
+
+            <div class="flex justify-end gap-3 pt-2">
+              <button type="button"
+                      hx-post="/api/settings/integration/{{ name }}/test"
+                      hx-swap="none"
+                      class="px-4 py-2 text-xs font-mono uppercase tracking-wider border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text transition-colors">
+                <i class="fa-solid fa-plug mr-2"></i> Test Connection
+              </button>
+              <button type="submit"
+                      class="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-mil-accent text-mil-black hover:bg-mil-accent/90 transition-colors">
+                <i class="fa-solid fa-save mr-2"></i> Save
+              </button>
+            </div>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Appearance Tab -->
+    <div id="panel-appearance" class="tab-panel hidden">
+      <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Appearance</h2>
+        <p class="text-xs text-mil-muted">Customize the look and feel of your dashboard</p>
+      </div>
+
+      <div class="bg-mil-card border border-mil-border p-6">
+        <p class="text-sm text-mil-muted text-center py-8">
+          <i class="fa-solid fa-palette text-2xl mb-4 block text-mil-accent"></i>
+          More appearance options coming soon...
+        </p>
+      </div>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="panel-dashboard" class="tab-panel hidden">
+      <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Dashboard Settings</h2>
+        <p class="text-xs text-mil-muted">Configure dashboard behavior</p>
+      </div>
+
+      <div class="bg-mil-card border border-mil-border p-6 space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Loading Screen</h3>
+            <p class="text-[10px] text-mil-muted">Show animated loading screen on startup</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox"
+                   {% if settings.appearance.show_loading_screen %}checked{% endif %}
+                   hx-post="/api/settings/appearance/show_loading_screen/toggle"
+                   hx-trigger="change"
+                   hx-swap="none">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">News Ticker</h3>
+            <p class="text-[10px] text-mil-muted">Show scrolling news ticker at bottom</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox"
+                   {% if settings.dashboard.news_ticker_enabled %}checked{% endif %}
+                   hx-post="/api/settings/dashboard/news_ticker_enabled/toggle"
+                   hx-trigger="change"
+                   hx-swap="none">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Weather Bar</h3>
+            <p class="text-[10px] text-mil-muted">Show weather info in top bar</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox"
+                   {% if settings.dashboard.weather_bar_enabled %}checked{% endif %}
+                   hx-post="/api/settings/dashboard/weather_bar_enabled/toggle"
+                   hx-trigger="change"
+                   hx-swap="none">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Crypto Ticker</h3>
+            <p class="text-[10px] text-mil-muted">Show crypto prices ticker</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox"
+                   {% if settings.dashboard.crypto_bar_enabled %}checked{% endif %}
+                   hx-post="/api/settings/dashboard/crypto_bar_enabled/toggle"
+                   hx-trigger="change"
+                   hx-swap="none">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function showTab(tabName) {
+      // Hide all panels
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      // Deactivate all tabs
+      document.querySelectorAll('.tab-btn').forEach(t => {
+        t.classList.remove('border-mil-accent', 'text-mil-accent');
+        t.classList.add('border-transparent', 'text-mil-muted');
+      });
+      // Show selected panel
+      document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+      // Activate selected tab
+      const tab = document.getElementById(`tab-${tabName}`);
+      tab.classList.remove('border-transparent', 'text-mil-muted');
+      tab.classList.add('border-mil-accent', 'text-mil-accent');
+    }
+
+    // Show success/error notifications
+    document.body.addEventListener('htmx:afterRequest', (e) => {
+      if (e.detail.successful) {
+        // Could show a toast notification here
+        console.log('Settings saved');
+      }
+    });
+  </script>
+</body>
+</html>
