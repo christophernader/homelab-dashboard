@@ -1,0 +1,22 @@
+<div id="widget-news" class="h-44 p-5 bg-mil-card shiny-border overflow-hidden" hx-get="/api/widgets/news" hx-trigger="every 300s" hx-swap="outerHTML">
+  <div class="flex items-center justify-between mb-3">
+    <p class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">HACKER NEWS</p>
+    <a href="https://news.ycombinator.com" target="_blank" class="text-mil-accent hover:text-mil-accentDim transition">
+      <i class="fa-brands fa-hacker-news text-xs"></i>
+    </a>
+  </div>
+  {% if news %}
+    <div class="space-y-2">
+      {% for story in news[:4] %}
+        <a href="{{ story.url }}" target="_blank" class="block group">
+          <p class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent transition truncate">{{ story.title }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="h-full flex flex-col items-center justify-center">
+      <i class="fa-solid fa-newspaper text-2xl text-mil-muted/30 mb-2"></i>
+      <p class="text-[10px] font-mono text-mil-muted uppercase tracking-wider">DATA UNAVAILABLE</p>
+    </div>
+  {% endif %}
+</div>

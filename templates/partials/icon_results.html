@@ -1,0 +1,21 @@
+<div id="icon-results" class="max-h-48 overflow-y-auto bg-mil-black border border-mil-border">
+  {% if icons %}
+    <div class="grid grid-cols-5 gap-1 p-2">
+      {% for icon in icons %}
+        <button
+          type="button"
+          class="flex flex-col items-center gap-1 p-2 hover:bg-mil-card transition cursor-pointer"
+          data-icon-url="{{ icon.url }}"
+          data-icon-name="{{ icon.name }}"
+        >
+          <img src="{{ icon.url }}" alt="{{ icon.name }}" class="w-8 h-8 object-contain" loading="lazy" referrerpolicy="no-referrer">
+          <span class="text-[8px] font-mono text-mil-muted truncate w-full text-center uppercase">{{ icon.name }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="p-6 text-center">
+      <p class="text-[10px] font-mono text-mil-muted uppercase tracking-wider">NO ICONS FOUND</p>
+    </div>
+  {% endif %}
+</div>

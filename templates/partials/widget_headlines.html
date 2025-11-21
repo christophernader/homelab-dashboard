@@ -1,0 +1,18 @@
+<div class="news-scroll flex whitespace-nowrap">
+  {% if headlines %}
+    {% for h in headlines %}
+      <a href="{{ h.url or '#' }}" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 text-xs font-mono text-mil-text hover:text-mil-accent transition cursor-pointer shrink-0 uppercase">
+        <span class="w-1 h-1 bg-mil-accent shrink-0"></span>
+        <span>{{ h.title }}</span>
+      </a>
+    {% endfor %}
+    {% for h in headlines %}
+      <a href="{{ h.url or '#' }}" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 text-xs font-mono text-mil-text hover:text-mil-accent transition cursor-pointer shrink-0 uppercase">
+        <span class="w-1 h-1 bg-mil-accent shrink-0"></span>
+        <span>{{ h.title }}</span>
+      </a>
+    {% endfor %}
+  {% else %}
+    <span class="px-8 text-xs font-mono text-mil-muted uppercase">NO DATA FEED AVAILABLE</span>
+  {% endif %}
+</div>

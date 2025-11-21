@@ -1,0 +1,6 @@
+{% if message %}
+  <div class="flex items-center gap-2 p-3 border text-xs font-mono uppercase tracking-wider {{ 'border-mil-error text-mil-error' if kind == 'error' else 'border-mil-success text-mil-success' }}">
+    <i class="fa-solid {{ 'fa-circle-exclamation' if kind == 'error' else 'fa-check' }} text-[10px]"></i>
+    <span>{{ message }}</span>
+  </div>
+{% endif %}

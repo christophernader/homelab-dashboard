@@ -1,0 +1,264 @@
+"""Free API widgets for the dashboard."""
+import requests
+from functools import lru_cache
+from datetime import datetime
+import time
+
+# Cache timeout in seconds
+CACHE_TIMEOUT = 300  # 5 minutes
+_cache = {}
+
+
+def _get_cached(key: str, fetcher, timeout: int = CACHE_TIMEOUT):
+    """Simple time-based cache."""
+    now = time.time()
+    if key in _cache:
+        data, timestamp = _cache[key]
+        if now - timestamp < timeout:
+            return data
+    try:
+        data = fetcher()
+        _cache[key] = (data, now)
+        return data
+    except Exception as e:
+        # Return stale cache if available
+        if key in _cache:
+            return _cache[key][0]
+        return None
+
+
+def get_weather(city: str = "auto", lat: float = None, lon: float = None) -> dict | None:
+    """Get weather from wttr.in (free, no API key). Supports lat/lon for accuracy."""
+    # Build location string
+    if lat is not None and lon is not None:
+        location = f"{lat},{lon}"
+        cache_key = f"weather_{lat}_{lon}"
+    else:
+        location = city
+        cache_key = f"weather_{city}"
+
+    def fetch():
+        url = f"https://wttr.in/{location}?format=j1"
+        resp = requests.get(url, timeout=5, headers={"User-Agent": "HomelabDashboard/1.0"})
+        resp.raise_for_status()
+        data = resp.json()
+
+        current = data.get("current_condition", [{}])[0]
+        area = data.get("nearest_area", [{}])[0]
+
+        return {
+            "temp_c": current.get("temp_C", "?"),
+            "temp_f": current.get("temp_F", "?"),
+            "feels_like_c": current.get("FeelsLikeC", "?"),
+            "condition": current.get("weatherDesc", [{}])[0].get("value", "Unknown"),
+            "humidity": current.get("humidity", "?"),
+            "wind_mph": current.get("windspeedMiles", "?"),
+            "wind_dir": current.get("winddir16Point", ""),
+            "city": area.get("areaName", [{}])[0].get("value", location),
+            "country": area.get("country", [{}])[0].get("value", ""),
+            "icon": _weather_icon(current.get("weatherCode", "113")),
+        }
+
+    return _get_cached(cache_key, fetch, timeout=600)
+
+
+def _weather_icon(code: str) -> str:
+    """Map weather code to Font Awesome icon."""
+    code = str(code)
+    icons = {
+        "113": "fa-sun",           # Clear/Sunny
+        "116": "fa-cloud-sun",     # Partly cloudy
+        "119": "fa-cloud",         # Cloudy
+        "122": "fa-cloud",         # Overcast
+        "143": "fa-smog",          # Mist
+        "176": "fa-cloud-rain",    # Patchy rain
+        "179": "fa-snowflake",     # Patchy snow
+        "182": "fa-cloud-sleet",   # Patchy sleet
+        "185": "fa-icicles",       # Patchy freezing drizzle
+        "200": "fa-cloud-bolt",    # Thundery outbreaks
+        "227": "fa-wind",          # Blowing snow
+        "230": "fa-snowflake",     # Blizzard
+        "248": "fa-smog",          # Fog
+        "260": "fa-smog",          # Freezing fog
+        "263": "fa-cloud-rain",    # Patchy light drizzle
+        "266": "fa-cloud-rain",    # Light drizzle
+        "281": "fa-temperature-low",  # Freezing drizzle
+        "284": "fa-icicles",       # Heavy freezing drizzle
+        "293": "fa-cloud-rain",    # Patchy light rain
+        "296": "fa-cloud-rain",    # Light rain
+        "299": "fa-cloud-showers-heavy",  # Moderate rain
+        "302": "fa-cloud-showers-heavy",  # Heavy rain
+        "305": "fa-cloud-showers-heavy",  # Heavy rain
+        "308": "fa-cloud-showers-heavy",  # Heavy rain
+        "311": "fa-icicles",       # Light freezing rain
+        "314": "fa-icicles",       # Heavy freezing rain
+        "317": "fa-snowflake",     # Light sleet
+        "320": "fa-snowflake",     # Moderate sleet
+        "323": "fa-snowflake",     # Patchy light snow
+        "326": "fa-snowflake",     # Light snow
+        "329": "fa-snowflake",     # Patchy moderate snow
+        "332": "fa-snowflake",     # Moderate snow
+        "335": "fa-snowflake",     # Heavy snow
+        "338": "fa-snowflake",     # Heavy snow
+        "350": "fa-icicles",       # Ice pellets
+        "353": "fa-cloud-rain",    # Light rain shower
+        "356": "fa-cloud-showers-heavy",  # Heavy rain shower
+        "359": "fa-cloud-showers-heavy",  # Torrential rain
+        "362": "fa-snowflake",     # Light sleet showers
+        "365": "fa-snowflake",     # Heavy sleet showers
+        "368": "fa-snowflake",     # Light snow showers
+        "371": "fa-snowflake",     # Heavy snow showers
+        "374": "fa-icicles",       # Light ice pellet showers
+        "377": "fa-icicles",       # Heavy ice pellet showers
+        "386": "fa-cloud-bolt",    # Thundery with light rain
+        "389": "fa-cloud-bolt",    # Thundery with heavy rain
+        "392": "fa-cloud-bolt",    # Thundery with light snow
+        "395": "fa-cloud-bolt",    # Heavy snow with thunder
+    }
+    return icons.get(code, "fa-cloud")
+
+
+def get_hacker_news(limit: int = 5) -> list[dict] | None:
+    """Get top stories from Hacker News (free, no API key)."""
+    def fetch():
+        # Get top story IDs
+        resp = requests.get(
+            "https://hacker-news.firebaseio.com/v0/topstories.json",
+            timeout=5
+        )
+        resp.raise_for_status()
+        story_ids = resp.json()[:limit]
+
+        stories = []
+        for sid in story_ids:
+            story_resp = requests.get(
+                f"https://hacker-news.firebaseio.com/v0/item/{sid}.json",
+                timeout=3
+            )
+            if story_resp.ok:
+                story = story_resp.json()
+                stories.append({
+                    "title": story.get("title", ""),
+                    "url": story.get("url", f"https://news.ycombinator.com/item?id={sid}"),
+                    "score": story.get("score", 0),
+                    "comments": story.get("descendants", 0),
+                    "hn_url": f"https://news.ycombinator.com/item?id={sid}",
+                })
+        return stories
+
+    return _get_cached("hackernews", fetch, timeout=300)  # 5 min cache
+
+
+def get_reddit_top(subreddit: str = "technology", limit: int = 5) -> list[dict] | None:
+    """Get top posts from a subreddit (free, no API key for public data)."""
+    def fetch():
+        url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={limit}"
+        resp = requests.get(
+            url,
+            timeout=5,
+            headers={"User-Agent": "HomelabDashboard/1.0"}
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        posts = []
+        for item in data.get("data", {}).get("children", []):
+            post = item.get("data", {})
+            if post.get("stickied"):
+                continue
+            posts.append({
+                "title": post.get("title", "")[:100],
+                "url": post.get("url", ""),
+                "score": post.get("score", 0),
+                "comments": post.get("num_comments", 0),
+                "subreddit": post.get("subreddit", subreddit),
+                "reddit_url": f"https://reddit.com{post.get('permalink', '')}",
+            })
+        return posts[:limit]
+
+    return _get_cached(f"reddit_{subreddit}", fetch, timeout=300)
+
+
+def get_crypto_prices(coins: list[str] = None) -> list[dict] | None:
+    """Get crypto prices from CoinGecko (free, no API key for basic)."""
+    if coins is None:
+        coins = ["bitcoin", "ethereum"]
+
+    def fetch():
+        ids = ",".join(coins)
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=usd&include_24hr_change=true"
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+
+        result = []
+        for coin in coins:
+            if coin in data:
+                result.append({
+                    "id": coin,
+                    "name": coin.capitalize(),
+                    "price": data[coin].get("usd", 0),
+                    "change_24h": round(data[coin].get("usd_24h_change", 0), 2),
+                })
+        return result
+
+    return _get_cached("crypto", fetch, timeout=120)  # 2 min cache
+
+
+def get_world_headlines(limit: int = 10) -> list[dict] | None:
+    """Get world news headlines from various free sources."""
+    def fetch():
+        headlines = []
+
+        # Try Reddit worldnews
+        try:
+            resp = requests.get(
+                "https://www.reddit.com/r/worldnews/hot.json?limit=15",
+                timeout=5,
+                headers={"User-Agent": "HomelabDashboard/1.0"}
+            )
+            if resp.ok:
+                data = resp.json()
+                for item in data.get("data", {}).get("children", []):
+                    post = item.get("data", {})
+                    if not post.get("stickied") and post.get("score", 0) > 1000:
+                        # Get the actual article URL, not Reddit link
+                        url = post.get("url", "")
+                        if not url or "reddit.com" in url:
+                            url = f"https://reddit.com{post.get('permalink', '')}"
+                        headlines.append({
+                            "title": post.get("title", "")[:120],
+                            "url": url,
+                            "source": "Reddit",
+                        })
+        except:
+            pass
+
+        # Try HN for tech news
+        try:
+            resp = requests.get(
+                "https://hacker-news.firebaseio.com/v0/topstories.json",
+                timeout=5
+            )
+            if resp.ok:
+                for sid in resp.json()[:5]:
+                    story_resp = requests.get(
+                        f"https://hacker-news.firebaseio.com/v0/item/{sid}.json",
+                        timeout=3
+                    )
+                    if story_resp.ok:
+                        story = story_resp.json()
+                        if story.get("score", 0) > 100:
+                            # Get story URL or fallback to HN comments
+                            url = story.get("url", f"https://news.ycombinator.com/item?id={sid}")
+                            headlines.append({
+                                "title": story.get("title", "")[:120],
+                                "url": url,
+                                "source": "HN",
+                            })
+        except:
+            pass
+
+        return headlines[:limit] if headlines else None
+
+    return _get_cached("headlines", fetch, timeout=300)

@@ -1,0 +1,22 @@
+<div id="widget-reddit" class="h-44 p-5 bg-mil-card shiny-border overflow-hidden" hx-get="/api/widgets/reddit?sub={{ subreddit }}" hx-trigger="every 300s" hx-swap="outerHTML">
+  <div class="flex items-center justify-between mb-3">
+    <p class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">R/{{ subreddit | upper }}</p>
+    <a href="https://reddit.com/r/{{ subreddit }}" target="_blank" class="text-mil-accent hover:text-mil-accentDim transition">
+      <i class="fa-brands fa-reddit-alien text-xs"></i>
+    </a>
+  </div>
+  {% if posts %}
+    <div class="space-y-2">
+      {% for post in posts[:4] %}
+        <a href="{{ post.reddit_url }}" target="_blank" class="block group">
+          <p class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent transition truncate">{{ post.title }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="h-full flex flex-col items-center justify-center">
+      <i class="fa-brands fa-reddit text-2xl text-mil-muted/30 mb-2"></i>
+      <p class="text-[10px] font-mono text-mil-muted uppercase tracking-wider">DATA UNAVAILABLE</p>
+    </div>
+  {% endif %}
+</div>

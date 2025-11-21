@@ -1,0 +1,26 @@
+<div id="widget-crypto" class="h-44 p-5 bg-mil-card shiny-border" hx-get="/api/widgets/crypto" hx-trigger="every 120s" hx-swap="outerHTML">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">CRYPTO</p>
+    <i class="fa-brands fa-bitcoin text-mil-accent text-xs"></i>
+  </div>
+  {% if prices %}
+    <div class="space-y-3">
+      {% for coin in prices %}
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-medium text-mil-text uppercase">{{ coin.name }}</span>
+          <div class="text-right">
+            <span class="text-sm font-mono font-semibold text-mil-text">${{ "{:,.0f}".format(coin.price) }}</span>
+            <span class="text-[10px] font-mono font-medium ml-2 {{ 'text-mil-success' if coin.change_24h >= 0 else 'text-mil-error' }}">
+              {{ '+' if coin.change_24h >= 0 else '' }}{{ coin.change_24h }}%
+            </span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="h-full flex flex-col items-center justify-center">
+      <i class="fa-solid fa-coins text-2xl text-mil-muted/30 mb-2"></i>
+      <p class="text-[10px] font-mono text-mil-muted uppercase tracking-wider">DATA UNAVAILABLE</p>
+    </div>
+  {% endif %}
+</div>

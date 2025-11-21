@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homelab Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            mil: {
+              black: 'var(--mil-black)',
+              dark: 'var(--mil-dark)',
+              card: 'var(--mil-card)',
+              border: 'var(--mil-border)',
+              text: 'var(--mil-text)',
+              muted: 'var(--mil-muted)',
+              accent: '#f97316',
+              accentDim: '#c2410c',
+              success: '#22c55e',
+              error: '#ef4444',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    /* Theme variables */
+    :root {
+      --mil-black: #0a0a0a;
+      --mil-dark: #111111;
+      --mil-card: #151515;
+      --mil-border: #252525;
+      --mil-text: #e5e5e5;
+      --mil-muted: #6b6b6b;
+    }
+
+    .light-mode {
+      --mil-black: #ffffff;
+      --mil-dark: #f8f8f8;
+      --mil-card: #ffffff;
+      --mil-border: #e0e0e0;
+      --mil-text: #1a1a1a;
+      --mil-muted: #666666;
+    }
+
+    body { -webkit-font-smoothing: antialiased; }
+
+    /* Shiny border effect - single border with gradient shine */
+    .shiny-border {
+      position: relative;
+      border: 1px solid var(--mil-border);
+      background-image: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+    }
+    .shiny-border::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 50%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.15), transparent);
+      pointer-events: none;
+    }
+
+    .light-mode .shiny-border {
+      background-image: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .light-mode .shiny-border::after {
+      background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+    }
+
+    .light-mode .grid-bg {
+      opacity: 0.15;
+      mix-blend-mode: multiply;
+    }
+
+    /* Diagonal stripes header */
+    .stripe-bg {
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        rgba(255,255,255,0.03) 4px,
+        rgba(255,255,255,0.03) 8px
+      );
+    }
+
+    /* News ticker */
+    .news-scroll { animation: scroll 80s linear infinite; }
+    .news-ticker:hover .news-scroll { animation-play-state: paused; }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Drag and drop - using SortableJS */
+    .sortable-ghost {
+      opacity: 0.4;
+      background: #1a1a1a !important;
+    }
+    .sortable-chosen {
+      box-shadow: 0 0 0 2px #f97316;
+    }
+    .sortable-drag {
+      opacity: 1 !important;
+    }
+
+    /* Progress bar animation */
+    .progress-bar {
+      transition: width 0.5s ease;
+    }
+
+    /* Glow effect */
+    .glow-accent {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+    }
+
+    /* Animated tactical grid background */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
+        radial-gradient(circle at 15% 20%, rgba(255, 140, 0, 0.07), transparent 32%),
+        radial-gradient(circle at 80% 70%, rgba(255, 140, 0, 0.05), transparent 38%);
+      background-size: 110px 110px, 110px 110px, 100% 100%, 100% 100%;
+      opacity: 0.35;
+      mix-blend-mode: screen;
+      animation: grid-pan 36s linear infinite;
+      z-index: 0;
+    }
+
+    .grid-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 140, 0, 0.04),
+        rgba(255, 140, 0, 0.04) 18px,
+        transparent 18px,
+        transparent 36px
+      );
+      opacity: 0.4;
+      animation:
+        grid-drift 18s ease-in-out infinite alternate,
+        grid-scan 12s linear infinite;
+    }
+
+    @keyframes grid-pan {
+      0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+      100% { background-position: 180px 180px, -180px -180px, 0 0, 0 0; }
+    }
+
+    @keyframes grid-drift {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(-3%, -2%, 0) scale(1.05); }
+    }
+
+    @keyframes grid-scan {
+      0% { background-position: 0 0; }
+      100% { background-position: 240px 240px; }
+    }
+
+    /* HTMX indicator */
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: inline-flex; }
+  </style>
+  <!-- Three.js & Loading Screen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/static/js/loading.js" defer></script>
+</head>
+<body class="min-h-screen bg-mil-black text-mil-text font-sans relative">
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col">
+    <!-- Three.js Canvas Container -->
+    <div id="terrain-container" class="absolute inset-0"></div>
+
+    <!-- HUD Overlay -->
+    <div class="relative z-10 flex flex-col h-full pointer-events-none">
+      <!-- Top HUD -->
+      <div class="flex justify-between items-start p-6">
+        <!-- Top Left -->
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-[#f97316] animate-pulse"></div>
+            <span class="text-[10px] font-mono text-[#f97316] uppercase tracking-[0.3em]">SYSTEM INITIALIZING</span>
+          </div>
+          <div class="text-[10px] font-mono text-[#666] uppercase tracking-wider" id="boot-time">00:00:00</div>
+        </div>
+
+        <!-- Top Right -->
+        <div class="text-right space-y-1">
+          <div class="text-[10px] font-mono text-[#444] uppercase tracking-wider">HOMELAB CONTROL</div>
+          <div class="text-[10px] font-mono text-[#f97316] uppercase tracking-[0.2em]">v2.0.45</div>
+        </div>
+      </div>
+
+      <!-- Center Content -->
+      <div class="flex-1 flex flex-col items-center justify-center">
+        <div class="relative">
+          <!-- Scanning lines effect -->
+          <div class="absolute -inset-20 border border-[#f97316]/20"></div>
+          <div class="absolute -inset-16 border border-[#f97316]/10"></div>
+
+          <!-- Main Title -->
+          <div class="text-center space-y-4">
+            <div class="flex items-center justify-center gap-4">
+              <div class="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#f97316]/50"></div>
+              <div class="w-10 h-10 border border-[#f97316] flex items-center justify-center">
+                <i class="fa-solid fa-server text-[#f97316]"></i>
+              </div>
+              <div class="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#f97316]/50"></div>
+            </div>
+            <h1 class="text-2xl font-mono font-bold tracking-[0.5em] text-white">HOMELAB</h1>
+            <p class="text-[10px] font-mono text-[#666] uppercase tracking-[0.3em]">TACTICAL OPERATIONS CENTER</p>
+          </div>
+        </div>
+
+        <!-- Loading Bar -->
+        <div class="mt-16 w-72">
+          <div class="flex justify-between mb-2">
+            <span class="text-[10px] font-mono text-[#666] uppercase tracking-wider">LOADING SYSTEMS</span>
+            <span class="text-[10px] font-mono text-[#f97316]" id="load-percent">0%</span>
+          </div>
+          <div class="h-[2px] bg-[#222] overflow-hidden">
+            <div id="load-bar" class="h-full bg-[#f97316] transition-all duration-100" style="width: 0%"></div>
+          </div>
+          <div class="mt-3 text-[10px] font-mono text-[#444] uppercase tracking-wider text-center" id="load-status">
+            INITIALIZING CORE SYSTEMS...
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom HUD -->
+      <div class="flex justify-between items-end p-6">
+        <!-- Bottom Left - Coordinates -->
+        <div class="space-y-1">
+          <div class="text-[10px] font-mono text-[#444] uppercase">GRID REF</div>
+          <div class="text-[10px] font-mono text-[#666]" id="grid-ref">47.6062° N, 122.3321° W</div>
+        </div>
+
+        <!-- Bottom Center - Status indicators -->
+        <div class="flex gap-6">
+          <div class="text-center">
+            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">NET</div>
+            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse"></div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">SYS</div>
+            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse" style="animation-delay: 0.2s"></div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">SEC</div>
+            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse" style="animation-delay: 0.4s"></div>
+          </div>
+        </div>
+
+        <!-- Bottom Right -->
+        <div class="text-right space-y-1">
+          <div class="text-[10px] font-mono text-[#444] uppercase">TERRAIN ANALYSIS</div>
+          <div class="text-[10px] font-mono text-[#f97316]" id="terrain-status">MAPPING...</div>
+        </div>
+      </div>
+
+      <!-- Corner brackets -->
+      <div class="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-[#f97316]/30"></div>
+      <div class="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-[#f97316]/30"></div>
+      <div class="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-[#f97316]/30"></div>
+      <div class="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-[#f97316]/30"></div>
+    </div>
+  </div>
+
+  <div class="grid-bg"></div>
+  <!-- Stripe Header -->
+  <div class="stripe-bg h-8 border-b border-mil-border"></div>
+
+  <!-- News Ticker -->
+  <div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden">
+    <div class="relative flex items-center h-9">
+      <div class="absolute left-0 z-10 px-4 h-full bg-mil-accent text-mil-black text-[10px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-mil-black animate-pulse"></span>
+        LIVE FEED
+      </div>
+      <div id="news-ticker" class="pl-28" hx-get="/api/widgets/headlines" hx-trigger="load" hx-swap="innerHTML">
+        <span class="px-8 text-xs font-mono text-mil-muted">LOADING DATA...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-mil-dark border-b border-mil-border">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 border border-mil-accent flex items-center justify-center">
+            <i class="fa-solid fa-server text-mil-accent text-sm"></i>
+          </div>
+          <h1 class="text-lg font-mono font-bold tracking-wider">HOMELAB</h1>
+        </div>
+        <div class="flex items-center gap-4 mt-2">
+          <span class="text-[10px] font-mono text-mil-muted uppercase tracking-widest">/MODE DASHBOARD</span>
+          <span class="flex items-center gap-1.5 text-[10px] font-mono text-mil-success uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-mil-success"></span>
+            ACTIVE
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          id="theme-toggle"
+          onclick="toggleTheme()"
+          class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+          title="Toggle light/dark mode"
+        >
+          <i id="theme-icon" class="fa-solid fa-sun text-xs"></i>
+        </button>
+        <button
+          id="edit-toggle"
+          onclick="toggleEditMode()"
+          class="flex items-center gap-2 px-4 py-2 border border-mil-accent text-mil-accent text-xs font-mono font-bold uppercase tracking-wider hover:bg-mil-accent hover:text-mil-black transition-all"
+        >
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span id="edit-toggle-text">ADD SERVICE</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Services Section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ACTIVE SERVICES</h2>
+          <span id="refresh-indicator" class="htmx-indicator text-mil-accent text-xs">
+            <i class="fa-solid fa-circle-notch animate-spin"></i>
+          </span>
+        </div>
+        <span class="text-[10px] font-mono text-mil-muted">DRAG TO REORDER</span>
+      </div>
+      <div id="apps-container" hx-get="/api/apps" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#refresh-indicator">
+        {% include 'partials/apps.html' %}
+      </div>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="mb-10">
+      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">SYSTEM METRICS</h2>
+      <div id="live-stats" hx-get="/api/stats" hx-trigger="load, every 2s" hx-swap="innerHTML">
+        {% include 'partials/stats.html' %}
+      </div>
+    </section>
+
+    <!-- Widgets Grid -->
+    <section>
+      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">DATA FEEDS</h2>
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div id="weather-container" hx-get="/api/widgets/weather" hx-trigger="load" hx-swap="innerHTML">
+          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        </div>
+        <div hx-get="/api/widgets/crypto" hx-trigger="load" hx-swap="innerHTML">
+          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        </div>
+        <div hx-get="/api/widgets/news" hx-trigger="load" hx-swap="innerHTML">
+          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        </div>
+        <div hx-get="/api/widgets/reddit?sub=homelab" hx-trigger="load" hx-swap="innerHTML">
+          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Slide Panel -->
+  <div id="edit-overlay" class="fixed inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300" onclick="toggleEditMode()"></div>
+  <div id="edit-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-mil-dark border-l border-mil-border z-50 transform translate-x-full transition-transform duration-300">
+    <div class="h-full flex flex-col">
+      <div class="flex items-center justify-between p-6 border-b border-mil-border">
+        <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ADD SERVICE</h2>
+        <button onclick="toggleEditMode()" class="w-8 h-8 border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6">
+        <form id="add-app-form" class="space-y-5" hx-post="/api/apps/add" hx-target="#apps-container" hx-swap="innerHTML">
+          <div>
+            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Service Name</label>
+            <input name="name" required placeholder="e.g. Plex, Nextcloud" class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">URL / IP Address</label>
+            <input name="url" required placeholder="e.g. 192.168.1.100:8080" class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Icon</label>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-14 h-14 bg-mil-black border border-mil-border flex items-center justify-center">
+                <img id="icon-preview" src="{{ default_icon }}" alt="icon" class="w-10 h-10 object-contain">
+              </div>
+              <input type="hidden" id="icon-url" name="icon" value="{{ default_icon }}">
+              <input id="icon-search" name="q" placeholder="Search icons..." class="flex-1 px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition"
+                hx-get="/api/icons/search" hx-target="#icon-results" hx-trigger="load, keyup changed delay:250ms" />
+            </div>
+            <div id="icon-results"></div>
+          </div>
+
+          <div id="form-message"></div>
+
+          <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-mil-accent text-mil-black font-mono font-bold text-sm uppercase tracking-wider hover:bg-mil-accentDim transition-all">
+            <i class="fa-solid fa-plus text-xs"></i>
+            ADD TO DASHBOARD
+            <span id="form-spinner" class="htmx-indicator"><i class="fa-solid fa-spinner animate-spin ml-2"></i></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- SortableJS for proper drag and drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    let editMode = false;
+    let pendingClose = false;
+    let sortableInstance = null;
+    let lightMode = localStorage.getItem('lightMode') === 'true';
+
+    // Initialize theme
+    function initTheme() {
+      if (lightMode) {
+        document.body.classList.add('light-mode');
+        document.getElementById('theme-icon').className = 'fa-solid fa-moon text-xs';
+      }
+    }
+    initTheme();
+
+    function toggleTheme() {
+      lightMode = !lightMode;
+      localStorage.setItem('lightMode', lightMode);
+      document.body.classList.toggle('light-mode', lightMode);
+      const icon = document.getElementById('theme-icon');
+      icon.className = lightMode ? 'fa-solid fa-moon text-xs' : 'fa-solid fa-sun text-xs';
+    }
+
+    function toggleEditMode() {
+      if (pendingClose) return;
+      editMode = !editMode;
+      const panel = document.getElementById('edit-panel');
+      const overlay = document.getElementById('edit-overlay');
+      const toggleText = document.getElementById('edit-toggle-text');
+
+      if (editMode) {
+        panel.classList.remove('translate-x-full');
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
+        toggleText.textContent = 'CLOSE';
+      } else {
+        panel.classList.add('translate-x-full');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+        toggleText.textContent = 'ADD SERVICE';
+      }
+    }
+
+    // Icon selection
+    document.addEventListener('click', (e) => {
+      const tile = e.target.closest('[data-icon-url]');
+      if (!tile) return;
+      document.getElementById('icon-url').value = tile.dataset.iconUrl;
+      document.getElementById('icon-preview').src = tile.dataset.iconUrl;
+      document.querySelectorAll('[data-icon-url]').forEach(t => t.classList.remove('ring-1', 'ring-mil-accent'));
+      tile.classList.add('ring-1', 'ring-mil-accent');
+    });
+
+    // Form success
+    document.body.addEventListener('app_added', (e) => {
+      const slot = document.getElementById('form-message');
+      if (slot) {
+        slot.innerHTML = `<div class="flex items-center gap-2 p-3 border border-mil-success text-mil-success text-xs font-mono uppercase tracking-wider"><i class="fa-solid fa-check"></i> SERVICE ADDED</div>`;
+        document.getElementById('add-app-form')?.reset();
+        document.getElementById('icon-preview').src = '{{ default_icon }}';
+        document.getElementById('icon-url').value = '{{ default_icon }}';
+
+        pendingClose = true;
+        setTimeout(() => {
+          slot.innerHTML = '';
+          pendingClose = false;
+          if (editMode) toggleEditMode();
+        }, 1000);
+      }
+    });
+
+    // Initialize SortableJS
+    function initSortable() {
+      const grid = document.getElementById('apps-grid');
+      if (!grid) return;
+
+      if (sortableInstance) {
+        sortableInstance.destroy();
+      }
+
+      sortableInstance = new Sortable(grid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        handle: '.drag-handle',
+        onEnd: function(evt) {
+          const cards = grid.querySelectorAll('.app-card');
+          const order = [...cards].map(c => c.dataset.appName);
+
+          fetch('/api/apps/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order })
+          }).catch(err => console.error('Reorder failed:', err));
+        }
+      });
+    }
+
+    // Re-init after HTMX swaps
+    document.body.addEventListener('htmx:afterSwap', (e) => {
+      if (e.detail.target?.id === 'apps-container') {
+        initSortable();
+      }
+    });
+
+    // Geolocation for weather
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const container = document.getElementById('weather-container');
+          if (container) {
+            container.setAttribute('hx-get', `/api/widgets/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+            htmx.process(container);
+            htmx.trigger(container, 'load');
+          }
+        },
+        () => console.log('Geolocation denied')
+      );
+    }
+
+    document.addEventListener('DOMContentLoaded', initSortable);
+  </script>
+</body>
+</html>
