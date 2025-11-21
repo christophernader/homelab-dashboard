@@ -1,0 +1,16 @@
+{% if weather %}
+<div class="flex items-center gap-6 text-[10px] font-mono">
+  <div class="flex items-center gap-2">
+    <i class="fa-solid {{ weather.icon }} text-mil-accent"></i>
+    <span class="text-mil-text font-semibold">{{ weather.temp_c }}&deg;C</span>
+    <span class="text-mil-muted">{{ weather.condition }}</span>
+  </div>
+  <div class="flex items-center gap-4 text-mil-muted">
+    <span><i class="fa-solid fa-droplet text-mil-accent/50 mr-1"></i>{{ weather.humidity }}%</span>
+    <span><i class="fa-solid fa-wind text-mil-accent/50 mr-1"></i>{{ weather.wind_mph }}mph</span>
+    <span class="text-mil-text/60">{{ weather.city }}</span>
+  </div>
+</div>
+{% else %}
+<span class="text-[10px] font-mono text-mil-muted">WEATHER UNAVAILABLE</span>
+{% endif %}

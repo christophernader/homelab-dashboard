@@ -1,4 +1,4 @@
-<div id="widget-weather" class="h-44 p-5 bg-mil-card shiny-border" hx-get="/api/widgets/weather{% if lat and lon %}?lat={{ lat }}&lon={{ lon }}{% endif %}" hx-trigger="every 600s" hx-swap="outerHTML">
+<div id="widget-weather" class="h-80 p-5 bg-mil-card shiny-border" hx-get="/api/widgets/weather{% if lat and lon %}?lat={{ lat }}&lon={{ lon }}{% endif %}" hx-trigger="every 600s" hx-swap="outerHTML">
   {% if weather %}
     <div class="flex items-start justify-between">
       <div>

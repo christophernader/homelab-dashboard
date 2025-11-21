@@ -1,0 +1,286 @@
+/**
+ * Military-style entrance animations
+ */
+
+/* Base state - hidden before animation */
+[data-animate] {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Animate in class - triggered after loading */
+[data-animate].animate-in {
+  animation: militaryFadeIn 0.4s ease-out forwards;
+}
+
+/* Different animation types */
+[data-animate="fade"] {
+  transform: translateY(0);
+}
+[data-animate="fade"].animate-in {
+  animation: militaryFade 0.4s ease-out forwards;
+}
+
+[data-animate="slide-up"] {
+  transform: translateY(30px);
+}
+[data-animate="slide-up"].animate-in {
+  animation: militarySlideUp 0.5s ease-out forwards;
+}
+
+[data-animate="slide-down"] {
+  transform: translateY(-30px);
+}
+[data-animate="slide-down"].animate-in {
+  animation: militarySlideDown 0.5s ease-out forwards;
+}
+
+[data-animate="slide-left"] {
+  transform: translateX(30px);
+}
+[data-animate="slide-left"].animate-in {
+  animation: militarySlideLeft 0.5s ease-out forwards;
+}
+
+[data-animate="slide-right"] {
+  transform: translateX(-30px);
+}
+[data-animate="slide-right"].animate-in {
+  animation: militarySlideRight 0.5s ease-out forwards;
+}
+
+[data-animate="scale"] {
+  transform: scale(0.9);
+}
+[data-animate="scale"].animate-in {
+  animation: militaryScale 0.4s ease-out forwards;
+}
+
+[data-animate="glitch"] {
+  transform: translateX(0);
+}
+[data-animate="glitch"].animate-in {
+  animation: militaryGlitch 0.6s ease-out forwards;
+}
+
+/* Keyframes */
+@keyframes militaryFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes militaryFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes militarySlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes militarySlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes militarySlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes militarySlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes militaryScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes militaryGlitch {
+  0% {
+    opacity: 0;
+    transform: translateX(-5px);
+    filter: blur(2px);
+  }
+  20% {
+    opacity: 0.5;
+    transform: translateX(5px);
+    filter: blur(1px);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translateX(-3px);
+    filter: blur(0);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+  80% {
+    transform: translateX(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scan line effect on load */
+.loaded .scan-line {
+  animation: scanLine 1s ease-out forwards;
+}
+
+@keyframes scanLine {
+  0% {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Typing effect for text */
+[data-animate="type"] {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  opacity: 1;
+  transform: none;
+}
+
+[data-animate="type"].animate-in {
+  animation: typeIn 0.8s steps(20, end) forwards;
+}
+
+@keyframes typeIn {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* Flicker effect */
+[data-animate="flicker"].animate-in {
+  animation: flicker 0.15s ease-out 3;
+}
+
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Boot sequence numbers */
+.boot-number {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.15);
+}
+
+/* Pulse glow for status indicators */
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 15px currentColor, 0 0 25px currentColor;
+  }
+}
+
+/* Data stream effect */
+.data-stream::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #f97316, transparent);
+  animation: dataStream 2s linear infinite;
+}
+
+@keyframes dataStream {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

@@ -1,0 +1,118 @@
+{% if threats %}
+<div class="bg-mil-card shiny-border p-4 h-80 overflow-hidden">
+  <!-- Header with DEFCON status -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-shield-halved text-mil-accent text-sm"></i>
+      <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">THREAT MONITOR</span>
+    </div>
+    <div class="flex items-center gap-2">
+      {% if threats.color == 'red' %}
+      <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+      {% elif threats.color == 'orange' %}
+      <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+      {% elif threats.color == 'yellow' %}
+      <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+      {% else %}
+      <span class="w-2 h-2 rounded-full bg-green-500"></span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- DEFCON Display -->
+  <div class="text-center py-3 mb-4 border border-mil-border bg-mil-dark/50">
+    <div class="text-2xl font-mono font-bold tracking-wider
+      {% if threats.color == 'red' %}text-red-500
+      {% elif threats.color == 'orange' %}text-orange-500
+      {% elif threats.color == 'yellow' %}text-yellow-400
+      {% else %}text-green-500{% endif %}">
+      {{ threats.level }}
+    </div>
+    <div class="text-[10px] font-mono text-mil-muted uppercase tracking-widest mt-1">
+      STATUS: {{ threats.status }}
+    </div>
+    {% if threats.alerts_count > 0 %}
+    <div class="text-[10px] font-mono text-orange-400 uppercase tracking-wider mt-2">
+      <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+      {{ threats.alerts_count }} ACTIVE ALERT{{ 's' if threats.alerts_count > 1 else '' }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Earthquakes Section -->
+  {% if threats.earthquakes %}
+  <div class="mb-4">
+    <div class="flex items-center gap-2 mb-2">
+      <i class="fa-solid fa-house-crack text-xs text-mil-muted"></i>
+      <span class="text-[9px] font-mono font-bold uppercase tracking-wider text-mil-muted">SEISMIC ACTIVITY (24H)</span>
+    </div>
+    <div class="space-y-1.5">
+      {% for quake in threats.earthquakes[:3] %}
+      <a href="{{ quake.url }}" target="_blank" rel="noopener"
+         class="flex items-center justify-between p-2 bg-mil-dark/50 border border-mil-border hover:border-mil-accent transition-colors group">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <span class="flex-shrink-0 w-8 h-6 flex items-center justify-center text-xs font-mono font-bold
+            {% if quake.magnitude >= 6.0 %}bg-red-500/20 text-red-400 border border-red-500/30
+            {% elif quake.magnitude >= 5.0 %}bg-orange-500/20 text-orange-400 border border-orange-500/30
+            {% else %}bg-yellow-500/20 text-yellow-400 border border-yellow-500/30{% endif %}">
+            {{ quake.magnitude }}
+          </span>
+          <span class="text-[10px] font-mono text-mil-text truncate group-hover:text-mil-accent transition-colors">
+            {{ quake.place[:40] }}
+          </span>
+        </div>
+        <span class="text-[9px] font-mono text-mil-muted flex-shrink-0 ml-2">{{ quake.time }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Disaster Alerts Section -->
+  {% if threats.disasters %}
+  <div>
+    <div class="flex items-center gap-2 mb-2">
+      <i class="fa-solid fa-triangle-exclamation text-xs text-mil-muted"></i>
+      <span class="text-[9px] font-mono font-bold uppercase tracking-wider text-mil-muted">GDACS ALERTS</span>
+    </div>
+    <div class="space-y-1.5">
+      {% for alert in threats.disasters[:2] %}
+      <a href="{{ alert.link }}" target="_blank" rel="noopener"
+         class="block p-2 bg-mil-dark/50 border border-mil-border hover:border-mil-accent transition-colors group
+           {% if alert.alert_level == 'red' %}border-l-2 border-l-red-500
+           {% elif alert.alert_level == 'orange' %}border-l-2 border-l-orange-500
+           {% else %}border-l-2 border-l-green-500{% endif %}">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5
+            {% if alert.alert_level == 'red' %}bg-red-500/20 text-red-400
+            {% elif alert.alert_level == 'orange' %}bg-orange-500/20 text-orange-400
+            {% else %}bg-green-500/20 text-green-400{% endif %}">
+            {{ alert.alert_level | upper }}
+          </span>
+          <span class="text-[8px] font-mono uppercase tracking-wider text-mil-muted">
+            {{ alert.event_type | upper }}
+          </span>
+        </div>
+        <div class="text-[10px] font-mono text-mil-text truncate group-hover:text-mil-accent transition-colors">
+          {{ alert.title[:60] }}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="mt-3 pt-2 border-t border-mil-border">
+    <div class="flex items-center justify-between text-[8px] font-mono text-mil-muted uppercase tracking-wider">
+      <span>SOURCES: USGS / GDACS</span>
+      <span>AUTO-REFRESH: 2M</span>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="bg-mil-card shiny-border p-4 h-full flex flex-col items-center justify-center">
+  <i class="fa-solid fa-shield-halved text-mil-muted text-2xl mb-2"></i>
+  <span class="text-xs font-mono text-mil-muted">THREAT DATA UNAVAILABLE</span>
+</div>
+{% endif %}

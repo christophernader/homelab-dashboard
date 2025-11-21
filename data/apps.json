@@ -20,8 +20,18 @@
     "icon": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/4chan.png"
   },
   {
+    "name": "hey",
+    "url": "http://hey",
+    "icon": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/alertmanager.png"
+  },
+  {
     "name": "testtt",
-    "url": "http://testt",
-    "icon": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/3cx-light.png"
+    "url": "http://testtest",
+    "icon": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/3cx.png"
+  },
+  {
+    "name": "testt",
+    "url": "http://test3",
+    "icon": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/heyform.png"
   }
 ]

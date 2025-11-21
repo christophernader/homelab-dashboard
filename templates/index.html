@@ -37,6 +37,7 @@
   </script>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="/static/css/animations.css" />
   <style>
     /* Theme variables */
     :root {
@@ -59,34 +60,77 @@
 
     body { -webkit-font-smoothing: antialiased; }
 
-    /* Shiny border effect - single border with gradient shine */
+    /* Premium shiny border effect - sharp military corners */
     .shiny-border {
       position: relative;
       border: 1px solid var(--mil-border);
-      background-image: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+      background: var(--mil-card);
+      box-shadow:
+        /* Inner highlight line */
+        inset 0 1px 0 0 rgba(255,255,255,0.06),
+        /* Depth shadow */
+        0 1px 2px rgba(0,0,0,0.2),
+        0 4px 12px rgba(0,0,0,0.15);
     }
-    .shiny-border::after {
+
+    /* Top edge highlight - the key shine effect */
+    .shiny-border::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
-      right: 50%;
+      right: 0;
       height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.15), transparent);
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.1) 0%,
+        rgba(255,255,255,0.25) 30%,
+        rgba(255,255,255,0.35) 50%,
+        rgba(255,255,255,0.25) 70%,
+        rgba(255,255,255,0.1) 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Subtle inner top glow */
+    .shiny-border::after {
+      content: '';
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      right: 1px;
+      height: 40%;
+      background: linear-gradient(180deg,
+        rgba(255,255,255,0.03) 0%,
+        transparent 100%
+      );
       pointer-events: none;
     }
 
+    /* Light mode adjustments */
     .light-mode .shiny-border {
-      background-image: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    .light-mode .shiny-border::after {
-      background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+      border-color: rgba(0,0,0,0.1);
+      box-shadow:
+        inset 0 1px 0 0 rgba(255,255,255,0.8),
+        0 1px 2px rgba(0,0,0,0.05),
+        0 4px 12px rgba(0,0,0,0.08);
     }
 
-    .light-mode .grid-bg {
-      opacity: 0.15;
-      mix-blend-mode: multiply;
+    .light-mode .shiny-border::before {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.5) 0%,
+        rgba(255,255,255,0.95) 30%,
+        rgba(255,255,255,1) 50%,
+        rgba(255,255,255,0.95) 70%,
+        rgba(255,255,255,0.5) 100%
+      );
+    }
+
+    .light-mode .shiny-border::after {
+      background: linear-gradient(180deg,
+        rgba(255,255,255,0.5) 0%,
+        transparent 100%
+      );
     }
 
     /* Diagonal stripes header */
@@ -100,12 +144,69 @@
       );
     }
 
-    /* News ticker */
-    .news-scroll { animation: scroll 80s linear infinite; }
+    /* News ticker - slowed down */
+    .news-scroll { animation: scroll 150s linear infinite; }
     .news-ticker:hover .news-scroll { animation-play-state: paused; }
     @keyframes scroll {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
+    }
+
+    /* Crypto ticker */
+    .crypto-scroll { animation: scroll 60s linear infinite; }
+    .crypto-ticker:hover .crypto-scroll { animation-play-state: paused; }
+
+    /* Dynamic Grid Background - More Pronounced */
+    .grid-background {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+      background:
+        /* Main grid lines */
+        linear-gradient(90deg, rgba(249, 115, 22, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(249, 115, 22, 0.08) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 25s linear infinite;
+    }
+
+    .grid-background::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        /* Larger accent grid */
+        linear-gradient(90deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px);
+      background-size: 150px 150px;
+      animation: gridMove 50s linear infinite reverse;
+    }
+
+    .grid-background::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, transparent 0%, var(--mil-black) 80%);
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .light-mode .grid-background {
+      background:
+        linear-gradient(90deg, rgba(249, 115, 22, 0.1) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(249, 115, 22, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    .light-mode .grid-background::before {
+      background:
+        linear-gradient(90deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px);
+      background-size: 150px 150px;
     }
 
     /* Drag and drop - using SortableJS */
@@ -130,58 +231,25 @@
       box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
     }
 
-    /* Animated tactical grid background */
-    .grid-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        linear-gradient(90deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
-        radial-gradient(circle at 15% 20%, rgba(255, 140, 0, 0.07), transparent 32%),
-        radial-gradient(circle at 80% 70%, rgba(255, 140, 0, 0.05), transparent 38%);
-      background-size: 110px 110px, 110px 110px, 100% 100%, 100% 100%;
-      opacity: 0.35;
-      mix-blend-mode: screen;
-      animation: grid-pan 36s linear infinite;
-      z-index: 0;
-    }
-
-    .grid-bg::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        -45deg,
-        rgba(255, 140, 0, 0.04),
-        rgba(255, 140, 0, 0.04) 18px,
-        transparent 18px,
-        transparent 36px
-      );
-      opacity: 0.4;
-      animation:
-        grid-drift 18s ease-in-out infinite alternate,
-        grid-scan 12s linear infinite;
-    }
-
-    @keyframes grid-pan {
-      0% { background-position: 0 0, 0 0, 0 0, 0 0; }
-      100% { background-position: 180px 180px, -180px -180px, 0 0, 0 0; }
-    }
-
-    @keyframes grid-drift {
-      0% { transform: translate3d(0,0,0) scale(1); }
-      100% { transform: translate3d(-3%, -2%, 0) scale(1.05); }
-    }
-
-    @keyframes grid-scan {
-      0% { background-position: 0 0; }
-      100% { background-position: 240px 240px; }
-    }
-
     /* HTMX indicator */
     .htmx-indicator { display: none; }
     .htmx-request .htmx-indicator { display: inline-flex; }
+
+    /* Intel feed scrollbar */
+    .intel-feed::-webkit-scrollbar {
+      width: 4px;
+    }
+    .intel-feed::-webkit-scrollbar-track {
+      background: var(--mil-dark);
+    }
+    .intel-feed::-webkit-scrollbar-thumb {
+      background: var(--mil-border);
+      border-radius: 2px;
+    }
+    .intel-feed::-webkit-scrollbar-thumb:hover {
+      background: var(--mil-accent);
+    }
+
   </style>
   <!-- Three.js & Loading Screen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -288,12 +356,24 @@
     </div>
   </div>
 
-  <div class="grid-bg"></div>
-  <!-- Stripe Header -->
-  <div class="stripe-bg h-8 border-b border-mil-border"></div>
+  <!-- Dynamic Grid Background -->
+  <div class="grid-background"></div>
 
-  <!-- News Ticker -->
-  <div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden">
+  <!-- Stripe Header with Weather -->
+  <div class="stripe-bg border-b border-mil-border" data-animate="fade">
+    <div class="max-w-7xl mx-auto px-6 h-8 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="text-[9px] font-mono text-mil-muted uppercase tracking-widest">SYS.ONLINE</span>
+      </div>
+      <!-- Minimal Weather Bar -->
+      <div id="weather-bar" hx-get="/api/widgets/weather-bar" hx-trigger="load" hx-swap="innerHTML" class="flex items-center gap-4">
+        <span class="text-[10px] font-mono text-mil-muted">WEATHER LOADING...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- News Ticker - Slowed Down -->
+  <div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden" data-animate="slide-down">
     <div class="relative flex items-center h-9">
       <div class="absolute left-0 z-10 px-4 h-full bg-mil-accent text-mil-black text-[10px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider">
         <span class="w-1.5 h-1.5 rounded-full bg-mil-black animate-pulse"></span>
@@ -305,10 +385,23 @@
     </div>
   </div>
 
+  <!-- Crypto Ticker Bar -->
+  <div class="crypto-ticker bg-mil-card border-b border-mil-border overflow-hidden" data-animate="slide-down">
+    <div class="relative flex items-center h-8">
+      <div class="absolute left-0 z-10 px-3 h-full bg-mil-dark border-r border-mil-border text-[9px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider text-mil-muted">
+        <i class="fa-solid fa-chart-line text-mil-accent"></i>
+        MARKETS
+      </div>
+      <div id="crypto-ticker" class="pl-24" hx-get="/api/widgets/crypto-bar" hx-trigger="load" hx-swap="innerHTML">
+        <span class="px-8 text-[10px] font-mono text-mil-muted">SYNCING...</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
-  <header class="bg-mil-dark border-b border-mil-border">
+  <header class="bg-mil-dark border-b border-mil-border" data-animate="slide-down">
     <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-      <div>
+      <div data-animate="slide-right">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 border border-mil-accent flex items-center justify-center">
             <i class="fa-solid fa-server text-mil-accent text-sm"></i>
@@ -323,7 +416,15 @@
           </span>
         </div>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3" data-animate="slide-left">
+        <button
+          id="terminal-toggle"
+          onclick="toggleTerminal()"
+          class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+          title="Open Terminal"
+        >
+          <i class="fa-solid fa-terminal text-xs"></i>
+        </button>
         <button
           id="theme-toggle"
           onclick="toggleTheme()"
@@ -346,7 +447,7 @@
 
   <main class="max-w-7xl mx-auto px-6 py-8">
     <!-- Services Section -->
-    <section class="mb-10">
+    <section class="mb-10" data-animate="slide-up">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ACTIVE SERVICES</h2>
@@ -356,34 +457,39 @@
         </div>
         <span class="text-[10px] font-mono text-mil-muted">DRAG TO REORDER</span>
       </div>
-      <div id="apps-container" hx-get="/api/apps" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#refresh-indicator">
+      <div id="apps-container" hx-get="/api/apps" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#refresh-indicator" data-animate="scale">
         {% include 'partials/apps.html' %}
       </div>
     </section>
 
     <!-- Stats Grid -->
-    <section class="mb-10">
+    <section class="mb-10" data-animate="slide-up">
       <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">SYSTEM METRICS</h2>
-      <div id="live-stats" hx-get="/api/stats" hx-trigger="load, every 2s" hx-swap="innerHTML">
+      <div id="live-stats" hx-get="/api/stats" hx-trigger="load, every 2s" hx-swap="innerHTML" data-animate="glitch">
         {% include 'partials/stats.html' %}
       </div>
     </section>
 
-    <!-- Widgets Grid -->
-    <section>
-      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">DATA FEEDS</h2>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div id="weather-container" hx-get="/api/widgets/weather" hx-trigger="load" hx-swap="innerHTML">
-          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+    <!-- Threat Monitor Section - Full Width -->
+    <section class="mb-10" data-animate="slide-up">
+      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">GLOBAL THREAT ASSESSMENT</h2>
+      <div hx-get="/api/widgets/threats-full" hx-trigger="load, every 120s" hx-swap="innerHTML" data-animate="glitch">
+        <div class="h-64 bg-mil-card border border-mil-border animate-pulse"></div>
+      </div>
+    </section>
+
+    <!-- Intel Feeds Grid -->
+    <section data-animate="slide-up">
+      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">INTEL FEEDS</h2>
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div hx-get="/api/widgets/news-detailed" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
+          <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
-        <div hx-get="/api/widgets/crypto" hx-trigger="load" hx-swap="innerHTML">
-          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        <div hx-get="/api/widgets/reddit-detailed?sub=worldnews" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
+          <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
-        <div hx-get="/api/widgets/news" hx-trigger="load" hx-swap="innerHTML">
-          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
-        </div>
-        <div hx-get="/api/widgets/reddit?sub=homelab" hx-trigger="load" hx-swap="innerHTML">
-          <div class="h-44 bg-mil-card border border-mil-border animate-pulse"></div>
+        <div hx-get="/api/widgets/reddit-detailed?sub=homelab" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
+          <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
       </div>
     </section>
@@ -436,6 +542,42 @@
       </div>
     </div>
   </div>
+
+  <!-- Terminal Overlay -->
+  <div id="terminal-overlay" class="fixed inset-0 bg-black/90 z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-8" onclick="if(event.target === this) toggleTerminal()">
+    <div class="w-full max-w-5xl h-[80vh] bg-mil-black border border-mil-border shiny-border flex flex-col" onclick="event.stopPropagation()">
+      <!-- Terminal Header -->
+      <div class="flex items-center justify-between px-2 py-1 border-b border-mil-border bg-mil-dark">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <!-- Tabs Container -->
+          <div id="terminal-tabs" class="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+            <!-- Tabs will be added dynamically -->
+          </div>
+          <!-- New Tab Button -->
+          <button onclick="createTerminalTab()" class="flex-shrink-0 w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all" title="New Tab">
+            <i class="fa-solid fa-plus text-[9px]"></i>
+          </button>
+        </div>
+        <div class="flex items-center gap-3 ml-3">
+          <span id="terminal-status" class="flex items-center gap-1.5 text-[9px] font-mono text-mil-success uppercase">
+            <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
+            CONNECTED
+          </span>
+          <button onclick="toggleTerminal()" class="w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-error hover:border-mil-error flex items-center justify-center transition-all" title="Close">
+            <i class="fa-solid fa-xmark text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+      <!-- Terminal Containers (one per tab) -->
+      <div id="terminal-panels" class="flex-1 overflow-hidden relative"></div>
+    </div>
+  </div>
+
+  <!-- xterm.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js"></script>
 
   <!-- SortableJS for proper drag and drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -545,15 +687,27 @@
       }
     });
 
-    // Geolocation for weather
+    // Geolocation for weather (both bar and widget)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const container = document.getElementById('weather-container');
-          if (container) {
-            container.setAttribute('hx-get', `/api/widgets/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-            htmx.process(container);
-            htmx.trigger(container, 'load');
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          // Update weather bar
+          const weatherBar = document.getElementById('weather-bar');
+          if (weatherBar) {
+            weatherBar.setAttribute('hx-get', `/api/widgets/weather-bar?lat=${lat}&lon=${lon}`);
+            htmx.process(weatherBar);
+            htmx.trigger(weatherBar, 'load');
+          }
+
+          // Update weather widget if exists
+          const weatherContainer = document.getElementById('weather-container');
+          if (weatherContainer) {
+            weatherContainer.setAttribute('hx-get', `/api/widgets/weather?lat=${lat}&lon=${lon}`);
+            htmx.process(weatherContainer);
+            htmx.trigger(weatherContainer, 'load');
           }
         },
         () => console.log('Geolocation denied')
@@ -561,6 +715,234 @@
     }
 
     document.addEventListener('DOMContentLoaded', initSortable);
+
+    // ========== TERMINAL WITH TABS ==========
+    let terminalOpen = false;
+    let terminalTabs = new Map(); // tabId -> { term, fitAddon, ws, container }
+    let activeTabId = null;
+    let tabCounter = 0;
+
+    function toggleTerminal() {
+      terminalOpen = !terminalOpen;
+      const overlay = document.getElementById('terminal-overlay');
+
+      if (terminalOpen) {
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
+
+        // Create first tab if none exist
+        if (terminalTabs.size === 0) {
+          createTerminalTab();
+        } else {
+          // Focus active terminal
+          const activeTab = terminalTabs.get(activeTabId);
+          if (activeTab) {
+            setTimeout(() => {
+              activeTab.fitAddon.fit();
+              activeTab.term.focus();
+            }, 100);
+          }
+        }
+      } else {
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+      }
+    }
+
+    function createTerminalTab() {
+      const tabId = `tab-${++tabCounter}`;
+      const tabsContainer = document.getElementById('terminal-tabs');
+      const panelsContainer = document.getElementById('terminal-panels');
+
+      // Create tab button
+      const tabBtn = document.createElement('button');
+      tabBtn.id = `btn-${tabId}`;
+      tabBtn.className = 'flex items-center gap-2 px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-mil-border bg-mil-card text-mil-muted hover:text-mil-text transition-all whitespace-nowrap';
+      tabBtn.innerHTML = `
+        <i class="fa-solid fa-terminal text-[8px]"></i>
+        <span>TERM ${tabCounter}</span>
+        <span onclick="event.stopPropagation(); closeTerminalTab('${tabId}')" class="ml-1 hover:text-mil-error">
+          <i class="fa-solid fa-xmark text-[8px]"></i>
+        </span>
+      `;
+      tabBtn.onclick = () => switchTerminalTab(tabId);
+      tabsContainer.appendChild(tabBtn);
+
+      // Create terminal container
+      const termContainer = document.createElement('div');
+      termContainer.id = `panel-${tabId}`;
+      termContainer.className = 'absolute inset-0 p-2 hidden';
+      panelsContainer.appendChild(termContainer);
+
+      // Initialize terminal
+      const term = new Terminal({
+        theme: {
+          background: '#0a0a0a',
+          foreground: '#e5e5e5',
+          cursor: '#f97316',
+          cursorAccent: '#0a0a0a',
+          selectionBackground: '#f9731650',
+          black: '#0a0a0a',
+          red: '#ef4444',
+          green: '#22c55e',
+          yellow: '#f97316',
+          blue: '#3b82f6',
+          magenta: '#a855f7',
+          cyan: '#06b6d4',
+          white: '#e5e5e5',
+        },
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 14,
+        cursorBlink: true,
+        cursorStyle: 'block',
+      });
+
+      const fitAddon = new FitAddon.FitAddon();
+      const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+
+      term.loadAddon(fitAddon);
+      term.loadAddon(webLinksAddon);
+      term.open(termContainer);
+
+      // Store tab data
+      terminalTabs.set(tabId, { term, fitAddon, ws: null, container: termContainer, tabBtn });
+
+      // Switch to new tab
+      switchTerminalTab(tabId);
+
+      // Connect to WebSocket
+      connectTerminalWS(tabId);
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        if (terminalOpen && activeTabId === tabId) {
+          fitAddon.fit();
+        }
+      });
+    }
+
+    function switchTerminalTab(tabId) {
+      // Hide all panels and deactivate all tabs
+      terminalTabs.forEach((data, id) => {
+        data.container.classList.add('hidden');
+        data.tabBtn.classList.remove('border-mil-accent', 'text-mil-accent', 'bg-mil-dark');
+        data.tabBtn.classList.add('border-mil-border', 'text-mil-muted', 'bg-mil-card');
+      });
+
+      // Show selected panel and activate tab
+      const tab = terminalTabs.get(tabId);
+      if (tab) {
+        tab.container.classList.remove('hidden');
+        tab.tabBtn.classList.remove('border-mil-border', 'text-mil-muted', 'bg-mil-card');
+        tab.tabBtn.classList.add('border-mil-accent', 'text-mil-accent', 'bg-mil-dark');
+        activeTabId = tabId;
+
+        setTimeout(() => {
+          tab.fitAddon.fit();
+          tab.term.focus();
+        }, 50);
+
+        // Update status based on this tab's connection
+        updateTerminalStatus(tab.ws);
+      }
+    }
+
+    function closeTerminalTab(tabId) {
+      const tab = terminalTabs.get(tabId);
+      if (!tab) return;
+
+      // Close WebSocket
+      if (tab.ws) {
+        tab.ws.close();
+      }
+
+      // Remove DOM elements
+      tab.tabBtn.remove();
+      tab.container.remove();
+      tab.term.dispose();
+
+      // Remove from map
+      terminalTabs.delete(tabId);
+
+      // Switch to another tab or close terminal if none left
+      if (terminalTabs.size === 0) {
+        toggleTerminal();
+      } else {
+        const nextTabId = terminalTabs.keys().next().value;
+        switchTerminalTab(nextTabId);
+      }
+    }
+
+    function updateTerminalStatus(ws) {
+      const statusEl = document.getElementById('terminal-status');
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        statusEl.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
+          CONNECTED
+        `;
+      } else {
+        statusEl.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-mil-error"></span>
+          DISCONNECTED
+        `;
+      }
+    }
+
+    function connectTerminalWS(tabId) {
+      const tab = terminalTabs.get(tabId);
+      if (!tab) return;
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/terminal`;
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        tab.ws = ws;
+
+        ws.onopen = () => {
+          if (activeTabId === tabId) updateTerminalStatus(ws);
+          // Send initial resize
+          setTimeout(() => {
+            tab.fitAddon.fit();
+            const dims = tab.fitAddon.proposeDimensions();
+            if (dims) {
+              ws.send(`\x1b[8;${dims.rows};${dims.cols}t`);
+            }
+          }, 100);
+        };
+
+        ws.onmessage = (event) => {
+          tab.term.write(event.data);
+        };
+
+        ws.onclose = () => {
+          if (activeTabId === tabId) updateTerminalStatus(ws);
+          tab.term.write('\r\n\x1b[1;31m[DISCONNECTED]\x1b[0m Connection closed\r\n');
+        };
+
+        ws.onerror = () => {
+          if (activeTabId === tabId) updateTerminalStatus(ws);
+        };
+
+        tab.term.onData((data) => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(data);
+          }
+        });
+
+        // Handle terminal resize
+        tab.term.onResize(({ cols, rows }) => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(`\x1b[8;${rows};${cols}t`);
+          }
+        });
+
+      } catch (e) {
+        console.error('WebSocket connection failed:', e);
+        updateTerminalStatus(null);
+      }
+    }
+
   </script>
 </body>
 </html>

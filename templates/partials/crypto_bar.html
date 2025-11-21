@@ -1,0 +1,18 @@
+{% if prices %}
+<div class="crypto-scroll flex items-center whitespace-nowrap" style="width: max-content;">
+  {% for _ in range(3) %}
+  {% for coin in prices %}
+  <div class="flex items-center gap-2 px-6 border-r border-mil-border/30">
+    <span class="text-[10px] font-mono font-semibold text-mil-text uppercase">{{ coin.name }}</span>
+    <span class="text-[10px] font-mono text-mil-text">${{ "{:,.0f}".format(coin.price) if coin.price >= 1 else "{:,.4f}".format(coin.price) }}</span>
+    <span class="text-[9px] font-mono font-medium {{ 'text-mil-success' if coin.change_24h >= 0 else 'text-mil-error' }}">
+      <i class="fa-solid {{ 'fa-caret-up' if coin.change_24h >= 0 else 'fa-caret-down' }} mr-0.5"></i>
+      {{ '+' if coin.change_24h >= 0 else '' }}{{ coin.change_24h }}%
+    </span>
+  </div>
+  {% endfor %}
+  {% endfor %}
+</div>
+{% else %}
+<span class="text-[10px] font-mono text-mil-muted px-4">MARKET DATA UNAVAILABLE</span>
+{% endif %}

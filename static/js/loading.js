@@ -1,5 +1,6 @@
 /**
  * Military-style Loading Screen with Three.js Perlin Noise Terrain
+ * Actually preloads dashboard data during the animation
  */
 
 // Simplex Noise implementation
@@ -90,18 +91,28 @@ const LoadingScreen = (function() {
   let scene, camera, renderer, terrain, animationId;
   let noise, time = 0;
   let loadProgress = 0;
+  let dataLoaded = {
+    apps: false,
+    stats: false,
+    threats: false,
+    weather: false,
+    crypto: false,
+    news: false,
+    headlines: false
+  };
 
-  const loadingMessages = [
-    'INITIALIZING CORE SYSTEMS...',
-    'ESTABLISHING SECURE CONNECTION...',
-    'LOADING NETWORK PROTOCOLS...',
-    'SCANNING AVAILABLE SERVICES...',
-    'MAPPING INFRASTRUCTURE...',
-    'AUTHENTICATING USER SESSION...',
-    'LOADING DASHBOARD MODULES...',
-    'FINALIZING SYSTEM CHECK...',
-    'READY FOR DEPLOYMENT...'
+  const loadingSteps = [
+    { key: 'apps', endpoint: '/api/apps', message: 'LOADING SERVICES...', weight: 15 },
+    { key: 'stats', endpoint: '/api/stats', message: 'FETCHING SYSTEM METRICS...', weight: 10 },
+    { key: 'threats', endpoint: '/api/widgets/threats-full', message: 'SCANNING GLOBAL THREATS...', weight: 20 },
+    { key: 'weather', endpoint: '/api/widgets/weather-bar', message: 'ACQUIRING WEATHER DATA...', weight: 10 },
+    { key: 'crypto', endpoint: '/api/widgets/crypto-bar', message: 'SYNCING MARKET DATA...', weight: 10 },
+    { key: 'news', endpoint: '/api/widgets/news-detailed', message: 'DOWNLOADING INTEL FEEDS...', weight: 15 },
+    { key: 'headlines', endpoint: '/api/widgets/headlines', message: 'AGGREGATING HEADLINES...', weight: 20 }
   ];
+
+  // Store preloaded data for injection
+  window.preloadedData = {};
 
   function init() {
     const container = document.getElementById('terrain-container');
@@ -146,8 +157,8 @@ const LoadingScreen = (function() {
     // Start animation
     animate();
 
-    // Start loading simulation
-    simulateLoading();
+    // Start actual data loading
+    loadAllData();
 
     // Update boot time
     updateBootTime();
@@ -238,39 +249,34 @@ const LoadingScreen = (function() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  function simulateLoading() {
+  async function loadAllData() {
     const loadBar = document.getElementById('load-bar');
     const loadPercent = document.getElementById('load-percent');
     const loadStatus = document.getElementById('load-status');
     const terrainStatus = document.getElementById('terrain-status');
 
-    let messageIndex = 0;
+    let completedWeight = 0;
 
-    const interval = setInterval(() => {
-      loadProgress += Math.random() * 8 + 2;
+    // Load each endpoint
+    for (const step of loadingSteps) {
+      if (loadStatus) loadStatus.textContent = step.message;
 
-      if (loadProgress >= 100) {
-        loadProgress = 100;
-        clearInterval(interval);
-
-        if (loadBar) loadBar.style.width = '100%';
-        if (loadPercent) loadPercent.textContent = '100%';
-        if (loadStatus) loadStatus.textContent = 'SYSTEM READY';
-        if (terrainStatus) terrainStatus.textContent = 'COMPLETE';
-
-        setTimeout(finishLoading, 800);
-        return;
+      try {
+        const response = await fetch(step.endpoint);
+        if (response.ok) {
+          const html = await response.text();
+          window.preloadedData[step.key] = html;
+          dataLoaded[step.key] = true;
+        }
+      } catch (e) {
+        console.warn(`Failed to preload ${step.key}:`, e);
       }
+
+      completedWeight += step.weight;
+      loadProgress = completedWeight;
 
       if (loadBar) loadBar.style.width = loadProgress + '%';
       if (loadPercent) loadPercent.textContent = Math.floor(loadProgress) + '%';
-
-      // Update status message
-      const newMessageIndex = Math.floor(loadProgress / 12);
-      if (newMessageIndex !== messageIndex && newMessageIndex < loadingMessages.length) {
-        messageIndex = newMessageIndex;
-        if (loadStatus) loadStatus.textContent = loadingMessages[messageIndex];
-      }
 
       // Update terrain status
       if (terrainStatus) {
@@ -279,7 +285,16 @@ const LoadingScreen = (function() {
         else if (loadProgress < 90) terrainStatus.textContent = 'RENDERING...';
         else terrainStatus.textContent = 'COMPLETE';
       }
-    }, 100);
+    }
+
+    // Final
+    if (loadBar) loadBar.style.width = '100%';
+    if (loadPercent) loadPercent.textContent = '100%';
+    if (loadStatus) loadStatus.textContent = 'ALL SYSTEMS OPERATIONAL';
+    if (terrainStatus) terrainStatus.textContent = 'COMPLETE';
+
+    // Short delay then finish
+    setTimeout(finishLoading, 600);
   }
 
   function updateBootTime() {
@@ -312,18 +327,58 @@ const LoadingScreen = (function() {
     const loadingScreen = document.getElementById('loading-screen');
     if (!loadingScreen) return;
 
-    // Fade out
+    // Mark body as loaded for animations
+    document.body.classList.add('loaded');
+
+    // Fade out loading screen
     loadingScreen.style.transition = 'opacity 0.5s ease-out';
     loadingScreen.style.opacity = '0';
 
     setTimeout(() => {
-      // Cleanup
+      // Cleanup Three.js
       if (animationId) cancelAnimationFrame(animationId);
       if (renderer) renderer.dispose();
       window.removeEventListener('resize', onResize);
 
       loadingScreen.remove();
+
+      // Trigger entrance animations
+      triggerEntranceAnimations();
+
+      // Inject preloaded data into containers
+      injectPreloadedData();
     }, 500);
+  }
+
+  function triggerEntranceAnimations() {
+    // Stagger animate elements with data-animate attribute
+    const elements = document.querySelectorAll('[data-animate]');
+    elements.forEach((el, index) => {
+      el.style.animationDelay = `${index * 0.08}s`;
+      el.classList.add('animate-in');
+    });
+  }
+
+  function injectPreloadedData() {
+    // Inject preloaded HTML into containers if available
+    const injections = [
+      { key: 'apps', target: '#apps-container' },
+      { key: 'stats', target: '#live-stats' },
+      { key: 'headlines', target: '#news-ticker' }
+    ];
+
+    injections.forEach(({ key, target }) => {
+      if (window.preloadedData[key]) {
+        const container = document.querySelector(target);
+        if (container) {
+          container.innerHTML = window.preloadedData[key];
+          // Re-init sortable if apps
+          if (key === 'apps' && typeof initSortable === 'function') {
+            initSortable();
+          }
+        }
+      }
+    });
   }
 
   return { init };
