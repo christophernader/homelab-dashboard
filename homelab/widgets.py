@@ -6,27 +6,42 @@ import time
 import xml.etree.ElementTree as ET
 from html import unescape
 import re
+from threading import Lock
+from collections import OrderedDict
 
 # Cache timeout in seconds
 CACHE_TIMEOUT = 300  # 5 minutes
-_cache = {}
+MAX_CACHE_SIZE = 50  # Maximum number of cached items
+_cache = OrderedDict()
+_cache_lock = Lock()
 
 
 def _get_cached(key: str, fetcher, timeout: int = CACHE_TIMEOUT):
-    """Simple time-based cache."""
+    """Thread-safe time-based cache with LRU eviction."""
     now = time.time()
-    if key in _cache:
-        data, timestamp = _cache[key]
-        if now - timestamp < timeout:
-            return data
+
+    with _cache_lock:
+        if key in _cache:
+            data, timestamp = _cache[key]
+            if now - timestamp < timeout:
+                # Move to end (most recently used)
+                _cache.move_to_end(key)
+                return data
+
     try:
         data = fetcher()
-        _cache[key] = (data, now)
+        with _cache_lock:
+            _cache[key] = (data, now)
+            _cache.move_to_end(key)
+            # Evict oldest items if cache is too large
+            while len(_cache) > MAX_CACHE_SIZE:
+                _cache.popitem(last=False)
         return data
-    except Exception as e:
+    except Exception:
         # Return stale cache if available
-        if key in _cache:
-            return _cache[key][0]
+        with _cache_lock:
+            if key in _cache:
+                return _cache[key][0]
         return None
 
 
@@ -253,7 +268,7 @@ def get_world_headlines(limit: int = 10) -> list[dict] | None:
                             "url": url,
                             "source": "Reddit",
                         })
-        except:
+        except Exception:
             pass
 
         # Try HN for tech news
@@ -278,7 +293,7 @@ def get_world_headlines(limit: int = 10) -> list[dict] | None:
                                 "url": url,
                                 "source": "HN",
                             })
-        except:
+        except Exception:
             pass
 
         return headlines[:limit] if headlines else None

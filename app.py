@@ -27,9 +27,6 @@ from homelab.widgets import (
 app = Flask(__name__)
 sock = Sock(app)
 
-# Store active terminal sessions
-terminal_sessions = {}
-
 
 @app.route("/")
 def index():

@@ -1,38 +1,86 @@
 import time
 from typing import Dict, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-ICON_RAW_BASE = "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/"
-ICON_API_URL = "https://api.github.com/repos/homarr-labs/dashboard-icons/contents/png"
+# Icon sources - homarr-labs and IceWhaleTech
+ICON_SOURCES = [
+    {
+        "name": "homarr",
+        "raw_base": "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/",
+        "api_url": "https://api.github.com/repos/homarr-labs/dashboard-icons/contents/png",
+    },
+    {
+        "name": "icewhale",
+        "raw_base": "https://raw.githubusercontent.com/IceWhaleTech/AppIcon/main/",
+        "api_url": "https://api.github.com/repos/IceWhaleTech/AppIcon/contents",
+    },
+]
+
 ICON_CACHE_TTL = 60 * 60  # 1 hour
-DEFAULT_ICON = ICON_RAW_BASE + "homarr.png"
+DEFAULT_ICON = "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/homarr.png"
 
 icon_cache: Dict[str, object] = {"icons": [], "fetched_at": 0.0}
 
 
-def fetch_icon_index() -> List[str]:
-    now = time.time()
-    if icon_cache["icons"] and now - icon_cache["fetched_at"] < ICON_CACHE_TTL:
-        return icon_cache["icons"]  # type: ignore
+def _fetch_from_source(source: dict) -> List[dict]:
+    """Fetch icons from a single source."""
     try:
-        resp = requests.get(ICON_API_URL, timeout=6)
+        resp = requests.get(source["api_url"], timeout=8)
         resp.raise_for_status()
         data = resp.json()
         icons = []
         for item in data:
-            if item.get("name", "").lower().endswith(".png"):
-                icons.append(item["name"].removesuffix(".png"))
-        icon_cache["icons"] = icons
-        icon_cache["fetched_at"] = now
+            name = item.get("name", "")
+            if name.lower().endswith(".png"):
+                icon_name = name.removesuffix(".png")
+                icons.append({
+                    "name": icon_name,
+                    "url": f"{source['raw_base']}{name}",
+                    "source": source["name"],
+                })
         return icons
     except requests.RequestException:
-        return icon_cache["icons"] if icon_cache["icons"] else []
+        return []
+
+
+def fetch_icon_index() -> List[dict]:
+    """Fetch icons from all sources with parallel requests."""
+    now = time.time()
+    if icon_cache["icons"] and now - icon_cache["fetched_at"] < ICON_CACHE_TTL:
+        return icon_cache["icons"]  # type: ignore
+
+    all_icons = []
+    seen_names = set()
+
+    # Fetch from all sources in parallel
+    with ThreadPoolExecutor(max_workers=len(ICON_SOURCES)) as executor:
+        futures = {executor.submit(_fetch_from_source, src): src for src in ICON_SOURCES}
+        for future in as_completed(futures):
+            try:
+                icons = future.result()
+                for icon in icons:
+                    # Deduplicate by name (prefer first source)
+                    if icon["name"].lower() not in seen_names:
+                        seen_names.add(icon["name"].lower())
+                        all_icons.append(icon)
+            except Exception:
+                pass
+
+    # Sort alphabetically
+    all_icons.sort(key=lambda x: x["name"].lower())
+
+    if all_icons:
+        icon_cache["icons"] = all_icons
+        icon_cache["fetched_at"] = now
+
+    return all_icons if all_icons else (icon_cache["icons"] if icon_cache["icons"] else [])
 
 
 def icon_payload(query: str | None = None, limit: int = 50) -> List[dict]:
+    """Return icons matching query."""
     icons = fetch_icon_index()
     if query:
-        icons = [i for i in icons if query.lower() in i.lower()]
-    icons = icons[:limit]
-    return [{"name": name, "url": f"{ICON_RAW_BASE}{name}.png"} for name in icons]
+        icons = [i for i in icons if query.lower() in i["name"].lower()]
+    return icons[:limit]
