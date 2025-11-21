@@ -19,5 +19,5 @@ Thumbs.db
 *.swp
 *.swo
 
-# Data (optional - remove if you want to track)
-# data/
+# Data - user's saved apps and settings (don't sync to server)
+data/
