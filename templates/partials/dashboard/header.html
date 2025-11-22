@@ -1,0 +1,42 @@
+<!-- Header -->
+<header class="bg-mil-dark border-b border-mil-border" data-animate="slide-down">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div data-animate="slide-right">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 border border-mil-accent flex items-center justify-center">
+                    <i class="fa-solid fa-server text-mil-accent text-sm"></i>
+                </div>
+                <h1 class="text-lg font-mono font-bold tracking-wider">HOMELAB</h1>
+            </div>
+            <div class="flex items-center gap-4 mt-2">
+                <span class="text-[10px] font-mono text-mil-muted uppercase tracking-widest">/MODE DASHBOARD</span>
+                <span class="flex items-center gap-1.5 text-[10px] font-mono text-mil-success uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 rounded-full bg-mil-success"></span>
+                    ACTIVE
+                </span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3" data-animate="slide-left">
+            <button id="terminal-toggle" onclick="toggleTerminal()"
+                class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+                title="Open Terminal">
+                <i class="fa-solid fa-terminal text-xs"></i>
+            </button>
+            <a href="/settings"
+                class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+                title="Settings">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </a>
+            <button id="theme-toggle" onclick="toggleTheme()"
+                class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+                title="Toggle light/dark mode">
+                <i id="theme-icon" class="fa-solid fa-sun text-xs"></i>
+            </button>
+            <button id="edit-toggle" onclick="toggleEditMode()"
+                class="flex items-center gap-2 px-4 py-2 border border-mil-accent text-mil-accent text-xs font-mono font-bold uppercase tracking-wider hover:bg-mil-accent hover:text-mil-black transition-all">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                <span id="edit-toggle-text">ADD SERVICE</span>
+            </button>
+        </div>
+    </div>
+</header>

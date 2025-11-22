@@ -1,0 +1,72 @@
+<div id="panel-appearance" class="tab-panel hidden">
+    <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Appearance</h2>
+        <p class="text-xs text-mil-muted">Customize the look and feel of your dashboard</p>
+    </div>
+
+    <div class="bg-mil-card border border-mil-border p-6 space-y-6">
+        <!-- Loading Screen Style -->
+        <div>
+            <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text mb-2">Loading Screen Style</h3>
+            <p class="text-[10px] text-mil-muted mb-4">Choose the visual style for the startup loading screen</p>
+            <div class="grid grid-cols-2 gap-4">
+                <label class="cursor-pointer">
+                    <input type="radio" name="loading_style" value="server" {% if
+                        settings.appearance.loading_screen_style=='server' %}checked{% endif %}
+                        hx-post="/api/settings/appearance/loading_screen_style" hx-vals='{"value": "server"}'
+                        hx-trigger="change" hx-swap="none" class="sr-only peer">
+                    <div
+                        class="p-4 border border-mil-border bg-mil-dark peer-checked:border-mil-accent peer-checked:bg-mil-accent/10 transition-all">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fa-solid fa-server text-xl text-mil-accent"></i>
+                            <span class="font-mono text-sm uppercase tracking-wider text-mil-text">Server</span>
+                        </div>
+                        <p class="text-[10px] text-mil-muted">3D wireframe server with live system pinouts showing CPU,
+                            RAM, disk, and network info</p>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="loading_style" value="terrain" {% if
+                        settings.appearance.loading_screen_style=='terrain' %}checked{% endif %}
+                        hx-post="/api/settings/appearance/loading_screen_style" hx-vals='{"value": "terrain"}'
+                        hx-trigger="change" hx-swap="none" class="sr-only peer">
+                    <div
+                        class="p-4 border border-mil-border bg-mil-dark peer-checked:border-mil-accent peer-checked:bg-mil-accent/10 transition-all">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fa-solid fa-mountain text-xl text-mil-accent"></i>
+                            <span class="font-mono text-sm uppercase tracking-wider text-mil-text">Terrain</span>
+                        </div>
+                        <p class="text-[10px] text-mil-muted">Animated wireframe terrain landscape with Perlin noise and
+                            orbiting camera</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Show Loading Screen Toggle -->
+        <div class="flex items-center justify-between pt-4 border-t border-mil-border">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Show Loading Screen</h3>
+                <p class="text-[10px] text-mil-muted">Display animated loading screen on startup</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.appearance.show_loading_screen %}checked{% endif %}
+                    hx-post="/api/settings/appearance/show_loading_screen/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <!-- Animations Toggle -->
+        <div class="flex items-center justify-between pt-4 border-t border-mil-border">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Animations</h3>
+                <p class="text-[10px] text-mil-muted">Enable UI animations and transitions</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.appearance.animations_enabled %}checked{% endif %}
+                    hx-post="/api/settings/appearance/animations_enabled/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+</div>

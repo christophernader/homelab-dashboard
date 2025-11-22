@@ -19,24 +19,61 @@ widgets_bp = Blueprint('widgets', __name__)
 @widgets_bp.get("/api/widgets/weather")
 def widget_weather():
     """Get weather widget."""
+    # First check query params, then fall back to saved settings
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
-    city = request.args.get("city", "auto")
+    city = request.args.get("city")
+
     settings = load_settings()
     location = settings.get('location', {})
     units = location.get('units', 'imperial')
-    weather = get_weather(city=city, lat=lat, lon=lon)
+
+    # If no params provided, use saved location settings
+    if lat is None and lon is None and city is None:
+        if not location.get('use_auto', True):
+            # Use manual location settings
+            city = location.get('city') or None
+            lat_str = location.get('latitude', '')
+            lon_str = location.get('longitude', '')
+            if lat_str and lon_str:
+                try:
+                    lat = float(lat_str)
+                    lon = float(lon_str)
+                except (ValueError, TypeError):
+                    pass
+
+    weather = get_weather(city=city or "auto", lat=lat, lon=lon)
     return render_template("partials/widget_weather.html", weather=weather, lat=lat, lon=lon, units=units)
 
 
 @widgets_bp.get("/api/widgets/weather-bar")
 def widget_weather_bar():
     """Get weather bar widget."""
+    # First check query params, then fall back to saved settings
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
-    city = request.args.get("city", "auto")
-    weather = get_weather(city=city, lat=lat, lon=lon)
-    return render_template("partials/weather_bar.html", weather=weather)
+    city = request.args.get("city")
+
+    settings = load_settings()
+    location = settings.get('location', {})
+    units = location.get('units', 'imperial')  # imperial (F) or metric (C)
+
+    # If no params provided, use saved location settings
+    if lat is None and lon is None and city is None:
+        if not location.get('use_auto', True):
+            # Use manual location settings
+            city = location.get('city') or None
+            lat_str = location.get('latitude', '')
+            lon_str = location.get('longitude', '')
+            if lat_str and lon_str:
+                try:
+                    lat = float(lat_str)
+                    lon = float(lon_str)
+                except (ValueError, TypeError):
+                    pass
+
+    weather = get_weather(city=city or "auto", lat=lat, lon=lon)
+    return render_template("partials/weather_bar.html", weather=weather, units=units)
 
 
 # ========== NEWS WIDGETS ==========

@@ -52,13 +52,11 @@ DEFAULT_SETTINGS = {
     },
     "appearance": {
         "theme": "dark",
-        "accent_color": "#f97316",
         "show_loading_screen": True,
         "loading_screen_style": "server",  # "server" or "terrain"
         "animations_enabled": True,
     },
     "dashboard": {
-        "refresh_interval": 30,
         "news_ticker_enabled": True,
         "weather_bar_enabled": True,
         "crypto_bar_enabled": True,

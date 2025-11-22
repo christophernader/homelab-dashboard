@@ -1,0 +1,37 @@
+<!-- Terminal Overlay -->
+<div id="terminal-overlay"
+    class="fixed inset-0 bg-black/90 z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-8"
+    onclick="if(event.target === this) toggleTerminal()">
+    <div class="w-full max-w-5xl h-[80vh] bg-mil-black border border-mil-border shiny-border flex flex-col"
+        onclick="event.stopPropagation()">
+        <!-- Terminal Header -->
+        <div class="flex items-center justify-between px-2 py-1 border-b border-mil-border bg-mil-dark">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <!-- Tabs Container -->
+                <div id="terminal-tabs" class="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+                    <!-- Tabs will be added dynamically -->
+                </div>
+                <!-- New Tab Button -->
+                <button onclick="createTerminalTab()"
+                    class="flex-shrink-0 w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
+                    title="New Tab">
+                    <i class="fa-solid fa-plus text-[9px]"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-3 ml-3">
+                <span id="terminal-status"
+                    class="flex items-center gap-1.5 text-[9px] font-mono text-mil-success uppercase">
+                    <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
+                    CONNECTED
+                </span>
+                <button onclick="toggleTerminal()"
+                    class="w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-error hover:border-mil-error flex items-center justify-center transition-all"
+                    title="Close">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Terminal Containers (one per tab) -->
+        <div id="terminal-panels" class="flex-1 min-h-0 relative overflow-hidden"></div>
+    </div>
+</div>

@@ -1,0 +1,46 @@
+<!-- Loading Screen -->
+<div id="loading-screen" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col">
+    <!-- Three.js Canvas Container -->
+    <div id="terrain-container" class="absolute inset-0"></div>
+
+    <!-- Pinout Labels Container -->
+    <div id="pinout-labels" class="absolute inset-0 z-[5] pointer-events-none"></div>
+
+    <!-- Minimal HUD Overlay -->
+    <div class="relative z-10 flex flex-col h-full pointer-events-none">
+        <!-- Top Left - System Status -->
+        <div class="absolute top-6 left-6">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="w-1.5 h-1.5 bg-[#f97316] animate-pulse"></div>
+                <span class="text-[9px] font-mono text-[#f97316] uppercase tracking-[0.2em]">SYSTEM SCAN</span>
+            </div>
+            <div class="text-[9px] font-mono text-[#444]" id="boot-time">00:00:00</div>
+        </div>
+
+        <!-- Top Right - Version -->
+        <div class="absolute top-6 right-6 text-right">
+            <div class="text-[9px] font-mono text-[#333] uppercase tracking-wider">HOMELAB</div>
+            <div class="text-[9px] font-mono text-[#f97316]/60">v2.1</div>
+        </div>
+
+        <!-- Bottom Progress Bar - Full Width -->
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+            <div class="max-w-md mx-auto">
+                <div class="flex justify-between mb-2">
+                    <span class="text-[9px] font-mono text-[#444] uppercase tracking-wider"
+                        id="load-status">INITIALIZING...</span>
+                    <span class="text-[9px] font-mono text-[#f97316]" id="load-percent">0%</span>
+                </div>
+                <div class="h-[1px] bg-[#222] overflow-hidden">
+                    <div id="load-bar" class="h-full bg-[#f97316] transition-all duration-100" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Corner brackets - subtle -->
+        <div class="absolute top-4 left-4 w-6 h-6 border-l border-t border-[#f97316]/20"></div>
+        <div class="absolute top-4 right-4 w-6 h-6 border-r border-t border-[#f97316]/20"></div>
+        <div class="absolute bottom-4 left-4 w-6 h-6 border-l border-b border-[#f97316]/20"></div>
+        <div class="absolute bottom-4 right-4 w-6 h-6 border-r border-b border-[#f97316]/20"></div>
+    </div>
+</div>

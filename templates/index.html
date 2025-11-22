@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Homelab Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -36,7 +39,8 @@
     }
   </script>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous" />
   <link rel="stylesheet" href="/static/css/animations.css" />
   <link rel="stylesheet" href="/static/css/dashboard.css" />
   <!-- Three.js & Loading Screen -->
@@ -44,152 +48,23 @@
   <script>
     // Pass loading screen settings from server
     window.loadingScreenStyle = '{{ appearance.loading_screen_style | default("server") }}';
-    window.showLoadingScreen = {{ 'true' if appearance.show_loading_screen | default(true) else 'false' }};
+    window.showLoadingScreen = {{ 'true' if appearance.show_loading_screen | default (true) else 'false' }};
   </script>
-  <script src="/static/js/loading.js" defer></script>
+  <!-- Loading Screen Logic -->
+  <script src="{{ url_for('static', filename='js/loading/viz_terrain.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/loading/viz_server.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/loading/core.js') }}"></script>
 </head>
+
 <body class="min-h-screen bg-mil-black text-mil-text font-sans relative">
-  <!-- Loading Screen -->
-  <div id="loading-screen" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col">
-    <!-- Three.js Canvas Container -->
-    <div id="terrain-container" class="absolute inset-0"></div>
-
-    <!-- Pinout Labels Container -->
-    <div id="pinout-labels" class="absolute inset-0 z-[5] pointer-events-none"></div>
-
-    <!-- Minimal HUD Overlay -->
-    <div class="relative z-10 flex flex-col h-full pointer-events-none">
-      <!-- Top Left - System Status -->
-      <div class="absolute top-6 left-6">
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-1.5 h-1.5 bg-[#f97316] animate-pulse"></div>
-          <span class="text-[9px] font-mono text-[#f97316] uppercase tracking-[0.2em]">SYSTEM SCAN</span>
-        </div>
-        <div class="text-[9px] font-mono text-[#444]" id="boot-time">00:00:00</div>
-      </div>
-
-      <!-- Top Right - Version -->
-      <div class="absolute top-6 right-6 text-right">
-        <div class="text-[9px] font-mono text-[#333] uppercase tracking-wider">HOMELAB</div>
-        <div class="text-[9px] font-mono text-[#f97316]/60">v2.1</div>
-      </div>
-
-      <!-- Bottom Progress Bar - Full Width -->
-      <div class="absolute bottom-0 left-0 right-0 p-6">
-        <div class="max-w-md mx-auto">
-          <div class="flex justify-between mb-2">
-            <span class="text-[9px] font-mono text-[#444] uppercase tracking-wider" id="load-status">INITIALIZING...</span>
-            <span class="text-[9px] font-mono text-[#f97316]" id="load-percent">0%</span>
-          </div>
-          <div class="h-[1px] bg-[#222] overflow-hidden">
-            <div id="load-bar" class="h-full bg-[#f97316] transition-all duration-100" style="width: 0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Corner brackets - subtle -->
-      <div class="absolute top-4 left-4 w-6 h-6 border-l border-t border-[#f97316]/20"></div>
-      <div class="absolute top-4 right-4 w-6 h-6 border-r border-t border-[#f97316]/20"></div>
-      <div class="absolute bottom-4 left-4 w-6 h-6 border-l border-b border-[#f97316]/20"></div>
-      <div class="absolute bottom-4 right-4 w-6 h-6 border-r border-b border-[#f97316]/20"></div>
-    </div>
-  </div>
+  {% include 'partials/dashboard/loading_screen.html' %}
 
   <!-- Dynamic Grid Background -->
   <div class="grid-background"></div>
 
-  <!-- Stripe Header with Weather -->
-  <div class="stripe-bg border-b border-mil-border" data-animate="fade">
-    <div class="max-w-7xl mx-auto px-6 h-8 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <span class="text-[9px] font-mono text-mil-muted uppercase tracking-widest">SYS.ONLINE</span>
-      </div>
-      <!-- Minimal Weather Bar -->
-      <div id="weather-bar" hx-get="/api/widgets/weather-bar" hx-trigger="load" hx-swap="innerHTML" class="flex items-center gap-4">
-        <span class="text-[10px] font-mono text-mil-muted">WEATHER LOADING...</span>
-      </div>
-    </div>
-  </div>
+  {% include 'partials/dashboard/tickers.html' %}
 
-  <!-- News Ticker - Slowed Down -->
-  <div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden" data-animate="slide-down">
-    <div class="relative flex items-center h-9">
-      <div class="absolute left-0 z-10 px-4 h-full bg-mil-accent text-mil-black text-[10px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-mil-black animate-pulse"></span>
-        LIVE FEED
-      </div>
-      <div id="news-ticker" class="pl-28" hx-get="/api/widgets/headlines" hx-trigger="load" hx-swap="innerHTML">
-        <span class="px-8 text-xs font-mono text-mil-muted">LOADING DATA...</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Crypto Ticker Bar -->
-  <div class="crypto-ticker bg-mil-card border-b border-mil-border overflow-hidden" data-animate="slide-down">
-    <div class="relative flex items-center h-8">
-      <div class="absolute left-0 z-10 px-3 h-full bg-mil-dark border-r border-mil-border text-[9px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider text-mil-muted">
-        <i class="fa-solid fa-chart-line text-mil-accent"></i>
-        MARKETS
-      </div>
-      <div id="crypto-ticker" class="pl-24" hx-get="/api/widgets/crypto-bar" hx-trigger="load" hx-swap="innerHTML">
-        <span class="px-8 text-[10px] font-mono text-mil-muted">SYNCING...</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Header -->
-  <header class="bg-mil-dark border-b border-mil-border" data-animate="slide-down">
-    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-      <div data-animate="slide-right">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 border border-mil-accent flex items-center justify-center">
-            <i class="fa-solid fa-server text-mil-accent text-sm"></i>
-          </div>
-          <h1 class="text-lg font-mono font-bold tracking-wider">HOMELAB</h1>
-        </div>
-        <div class="flex items-center gap-4 mt-2">
-          <span class="text-[10px] font-mono text-mil-muted uppercase tracking-widest">/MODE DASHBOARD</span>
-          <span class="flex items-center gap-1.5 text-[10px] font-mono text-mil-success uppercase tracking-wider">
-            <span class="w-1.5 h-1.5 rounded-full bg-mil-success"></span>
-            ACTIVE
-          </span>
-        </div>
-      </div>
-      <div class="flex items-center gap-3" data-animate="slide-left">
-        <button
-          id="terminal-toggle"
-          onclick="toggleTerminal()"
-          class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
-          title="Open Terminal"
-        >
-          <i class="fa-solid fa-terminal text-xs"></i>
-        </button>
-        <a
-          href="/settings"
-          class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
-          title="Settings"
-        >
-          <i class="fa-solid fa-gear text-xs"></i>
-        </a>
-        <button
-          id="theme-toggle"
-          onclick="toggleTheme()"
-          class="w-9 h-9 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all"
-          title="Toggle light/dark mode"
-        >
-          <i id="theme-icon" class="fa-solid fa-sun text-xs"></i>
-        </button>
-        <button
-          id="edit-toggle"
-          onclick="toggleEditMode()"
-          class="flex items-center gap-2 px-4 py-2 border border-mil-accent text-mil-accent text-xs font-mono font-bold uppercase tracking-wider hover:bg-mil-accent hover:text-mil-black transition-all"
-        >
-          <i class="fa-solid fa-plus text-[10px]"></i>
-          <span id="edit-toggle-text">ADD SERVICE</span>
-        </button>
-      </div>
-    </div>
-  </header>
+  {% include 'partials/dashboard/header.html' %}
 
   <main class="max-w-7xl mx-auto px-6 py-8">
     <!-- Services Section -->
@@ -203,7 +78,8 @@
         </div>
         <span class="text-[10px] font-mono text-mil-muted">DRAG TO REORDER</span>
       </div>
-      <div id="apps-container" hx-get="/api/apps" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#refresh-indicator" data-animate="scale">
+      <div id="apps-container" hx-get="/api/apps" hx-trigger="load" hx-swap="innerHTML"
+        hx-indicator="#refresh-indicator" data-animate="scale">
         {% include 'partials/apps.html' %}
       </div>
     </section>
@@ -217,7 +93,9 @@
     </section>
 
     <!-- Integrations Section -->
-    {% set has_integrations = (integrations.pihole.enabled if integrations and integrations.pihole else false) or (integrations.speedtest.enabled if integrations and integrations.speedtest else false) or (integrations.uptime_kuma.enabled if integrations and integrations.uptime_kuma else false) %}
+    {% set has_integrations = (integrations.pihole.enabled if integrations and integrations.pihole else false) or
+    (integrations.speedtest.enabled if integrations and integrations.speedtest else false) or
+    (integrations.uptime_kuma.enabled if integrations and integrations.uptime_kuma else false) %}
     {% if has_integrations %}
     <section class="mb-10" data-animate="slide-up">
       <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">INTEGRATIONS</h2>
@@ -243,7 +121,8 @@
 
     <!-- Threat Monitor Section - Full Width -->
     <section class="mb-10" data-animate="slide-up">
-      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">GLOBAL THREAT ASSESSMENT</h2>
+      <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">GLOBAL THREAT ASSESSMENT
+      </h2>
       <div hx-get="/api/widgets/threats-full" hx-trigger="load, every 120s" hx-swap="innerHTML" data-animate="glitch">
         <div class="h-64 bg-mil-card border border-mil-border animate-pulse"></div>
       </div>
@@ -256,93 +135,21 @@
         <div hx-get="/api/widgets/news-detailed" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
-        <div hx-get="/api/widgets/reddit-detailed?sub=worldnews" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
+        <div hx-get="/api/widgets/reddit-detailed?sub=worldnews" hx-trigger="load" hx-swap="innerHTML"
+          data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
-        <div hx-get="/api/widgets/reddit-detailed?sub=homelab" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
+        <div hx-get="/api/widgets/reddit-detailed?sub=homelab" hx-trigger="load" hx-swap="innerHTML"
+          data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Slide Panel -->
-  <div id="edit-overlay" class="fixed inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300" onclick="toggleEditMode()"></div>
-  <div id="edit-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-mil-dark border-l border-mil-border z-50 transform translate-x-full transition-transform duration-300">
-    <div class="h-full flex flex-col">
-      <div class="flex items-center justify-between p-6 border-b border-mil-border">
-        <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ADD SERVICE</h2>
-        <button onclick="toggleEditMode()" class="w-8 h-8 border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark text-xs"></i>
-        </button>
-      </div>
+  {% include 'partials/dashboard/edit_panel.html' %}
 
-      <div class="flex-1 overflow-y-auto p-6">
-        <form id="add-app-form" class="space-y-5" hx-post="/api/apps/add" hx-target="#apps-container" hx-swap="innerHTML">
-          <div>
-            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Service Name</label>
-            <input name="name" required placeholder="e.g. Plex, Nextcloud" class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
-          </div>
-
-          <div>
-            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">URL / IP Address</label>
-            <input name="url" required placeholder="e.g. 192.168.1.100:8080" class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
-          </div>
-
-          <div>
-            <label class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Icon</label>
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-14 h-14 bg-mil-black border border-mil-border flex items-center justify-center">
-                <img id="icon-preview" src="{{ default_icon }}" alt="icon" class="w-10 h-10 object-contain">
-              </div>
-              <input type="hidden" id="icon-url" name="icon" value="{{ default_icon }}">
-              <input id="icon-search" name="q" placeholder="Search icons..." class="flex-1 px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition"
-                hx-get="/api/icons/search" hx-target="#icon-results" hx-trigger="load, keyup changed delay:250ms" />
-            </div>
-            <div id="icon-results"></div>
-          </div>
-
-          <div id="form-message"></div>
-
-          <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-mil-accent text-mil-black font-mono font-bold text-sm uppercase tracking-wider hover:bg-mil-accentDim transition-all">
-            <i class="fa-solid fa-plus text-xs"></i>
-            ADD TO DASHBOARD
-            <span id="form-spinner" class="htmx-indicator"><i class="fa-solid fa-spinner animate-spin ml-2"></i></span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Terminal Overlay -->
-  <div id="terminal-overlay" class="fixed inset-0 bg-black/90 z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-8" onclick="if(event.target === this) toggleTerminal()">
-    <div class="w-full max-w-5xl h-[80vh] bg-mil-black border border-mil-border shiny-border flex flex-col" onclick="event.stopPropagation()">
-      <!-- Terminal Header -->
-      <div class="flex items-center justify-between px-2 py-1 border-b border-mil-border bg-mil-dark">
-        <div class="flex items-center gap-2 flex-1 min-w-0">
-          <!-- Tabs Container -->
-          <div id="terminal-tabs" class="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
-            <!-- Tabs will be added dynamically -->
-          </div>
-          <!-- New Tab Button -->
-          <button onclick="createTerminalTab()" class="flex-shrink-0 w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-accent hover:border-mil-accent flex items-center justify-center transition-all" title="New Tab">
-            <i class="fa-solid fa-plus text-[9px]"></i>
-          </button>
-        </div>
-        <div class="flex items-center gap-3 ml-3">
-          <span id="terminal-status" class="flex items-center gap-1.5 text-[9px] font-mono text-mil-success uppercase">
-            <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
-            CONNECTED
-          </span>
-          <button onclick="toggleTerminal()" class="w-6 h-6 border border-mil-border text-mil-muted hover:text-mil-error hover:border-mil-error flex items-center justify-center transition-all" title="Close">
-            <i class="fa-solid fa-xmark text-[10px]"></i>
-          </button>
-        </div>
-      </div>
-      <!-- Terminal Containers (one per tab) -->
-      <div id="terminal-panels" class="flex-1 min-h-0 relative overflow-hidden"></div>
-    </div>
-  </div>
+  {% include 'partials/dashboard/terminal_overlay.html' %}
 
   <!-- xterm.js -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
@@ -353,379 +160,17 @@
   <!-- SortableJS for proper drag and drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
-    let editMode = false;
-    let pendingClose = false;
-    let sortableInstance = null;
-    let lightMode = localStorage.getItem('lightMode') === 'true';
-
-    // Initialize theme
-    function initTheme() {
-      if (lightMode) {
-        document.body.classList.add('light-mode');
-        document.getElementById('theme-icon').className = 'fa-solid fa-moon text-xs';
-      }
-    }
-    initTheme();
-
-    function toggleTheme() {
-      lightMode = !lightMode;
-      localStorage.setItem('lightMode', lightMode);
-      document.body.classList.toggle('light-mode', lightMode);
-      const icon = document.getElementById('theme-icon');
-      icon.className = lightMode ? 'fa-solid fa-moon text-xs' : 'fa-solid fa-sun text-xs';
-    }
-
-    function toggleEditMode() {
-      if (pendingClose) return;
-      editMode = !editMode;
-      const panel = document.getElementById('edit-panel');
-      const overlay = document.getElementById('edit-overlay');
-      const toggleText = document.getElementById('edit-toggle-text');
-
-      if (editMode) {
-        panel.classList.remove('translate-x-full');
-        overlay.classList.remove('hidden');
-        requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
-        toggleText.textContent = 'CLOSE';
-      } else {
-        panel.classList.add('translate-x-full');
-        overlay.classList.add('opacity-0');
-        setTimeout(() => overlay.classList.add('hidden'), 300);
-        toggleText.textContent = 'ADD SERVICE';
-      }
-    }
-
-    // Icon selection
-    document.addEventListener('click', (e) => {
-      const tile = e.target.closest('[data-icon-url]');
-      if (!tile) return;
-      document.getElementById('icon-url').value = tile.dataset.iconUrl;
-      document.getElementById('icon-preview').src = tile.dataset.iconUrl;
-      document.querySelectorAll('[data-icon-url]').forEach(t => t.classList.remove('ring-1', 'ring-mil-accent'));
-      tile.classList.add('ring-1', 'ring-mil-accent');
-    });
-
-    // Form success - keep sidebar open for adding multiple apps
-    document.body.addEventListener('app_added', (e) => {
-      const slot = document.getElementById('form-message');
-      if (slot) {
-        slot.innerHTML = `<div class="flex items-center gap-2 p-3 border border-mil-success text-mil-success text-xs font-mono uppercase tracking-wider"><i class="fa-solid fa-check"></i> SERVICE ADDED</div>`;
-        document.getElementById('add-app-form')?.reset();
-        document.getElementById('icon-preview').src = '{{ default_icon }}';
-        document.getElementById('icon-url').value = '{{ default_icon }}';
-
-        // Clear message after 3 seconds but keep sidebar open
-        setTimeout(() => {
-          slot.innerHTML = '';
-        }, 3000);
-      }
-    });
-
-    // Initialize SortableJS
-    function initSortable() {
-      const grid = document.getElementById('apps-grid');
-      if (!grid) return;
-
-      if (sortableInstance) {
-        sortableInstance.destroy();
-      }
-
-      sortableInstance = new Sortable(grid, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        handle: '.drag-handle',
-        onEnd: function(evt) {
-          const cards = grid.querySelectorAll('.app-card');
-          const order = [...cards].map(c => c.dataset.appName);
-
-          fetch('/api/apps/reorder', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order })
-          }).catch(err => console.error('Reorder failed:', err));
-        }
-      });
-    }
-
-    // Re-init after HTMX swaps
-    document.body.addEventListener('htmx:afterSwap', (e) => {
-      if (e.detail.target?.id === 'apps-container') {
-        initSortable();
-        // Re-process HTMX attributes for delete buttons
-        htmx.process(document.getElementById('apps-container'));
-      }
-    });
-
-    // Location settings from server
-    const locationSettings = {
-      useAuto: {{ (location.use_auto | default(true)) | tojson }},
-      city: {{ (location.city | default('')) | tojson }},
-      latitude: {{ (location.latitude | default('')) | tojson }},
-      longitude: {{ (location.longitude | default('')) | tojson }},
-      units: {{ (location.units | default('imperial')) | tojson }}
+    // Pass server-side variables to window for JS modules
+    window.locationSettings = {
+      useAuto: {{ (location.use_auto | default (true)) | tojson }},
+    city: { { (location.city | default ('')) | tojson } },
+    latitude: { { (location.latitude | default ('')) | tojson } },
+    longitude: { { (location.longitude | default ('')) | tojson } },
+    units: { { (location.units | default ('imperial')) | tojson } }
     };
-
-    // Geolocation for weather (only if auto-detect is enabled)
-    if (locationSettings.useAuto && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-
-          // Update weather bar with browser location
-          const weatherBar = document.getElementById('weather-bar');
-          if (weatherBar) {
-            weatherBar.setAttribute('hx-get', `/api/widgets/weather-bar?lat=${lat}&lon=${lon}`);
-            htmx.process(weatherBar);
-            htmx.trigger(weatherBar, 'load');
-          }
-
-          // Update weather widget if exists
-          const weatherContainer = document.getElementById('weather-container');
-          if (weatherContainer) {
-            weatherContainer.setAttribute('hx-get', `/api/widgets/weather?lat=${lat}&lon=${lon}`);
-            htmx.process(weatherContainer);
-            htmx.trigger(weatherContainer, 'load');
-          }
-        },
-        () => console.log('Geolocation denied or unavailable')
-      );
-    } else if (!locationSettings.useAuto) {
-      // Using manual location from settings - server will handle it
-      console.log('Using manual location settings');
-    }
-
-    document.addEventListener('DOMContentLoaded', initSortable);
-
-    // ========== TERMINAL WITH TABS ==========
-    let terminalOpen = false;
-    let terminalTabs = new Map(); // tabId -> { term, fitAddon, ws, container }
-    let activeTabId = null;
-    let tabCounter = 0;
-
-    function toggleTerminal() {
-      terminalOpen = !terminalOpen;
-      const overlay = document.getElementById('terminal-overlay');
-
-      if (terminalOpen) {
-        overlay.classList.remove('hidden');
-        requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
-
-        // Create first tab if none exist
-        if (terminalTabs.size === 0) {
-          createTerminalTab();
-        } else {
-          // Focus active terminal
-          const activeTab = terminalTabs.get(activeTabId);
-          if (activeTab) {
-            setTimeout(() => {
-              activeTab.fitAddon.fit();
-              activeTab.term.focus();
-            }, 100);
-          }
-        }
-      } else {
-        overlay.classList.add('opacity-0');
-        setTimeout(() => overlay.classList.add('hidden'), 300);
-      }
-    }
-
-    function createTerminalTab() {
-      const tabId = `tab-${++tabCounter}`;
-      const tabsContainer = document.getElementById('terminal-tabs');
-      const panelsContainer = document.getElementById('terminal-panels');
-
-      // Create tab button
-      const tabBtn = document.createElement('button');
-      tabBtn.id = `btn-${tabId}`;
-      tabBtn.className = 'flex items-center gap-2 px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-mil-border bg-mil-card text-mil-muted hover:text-mil-text transition-all whitespace-nowrap';
-      tabBtn.innerHTML = `
-        <i class="fa-solid fa-terminal text-[8px]"></i>
-        <span>TERM ${tabCounter}</span>
-        <span onclick="event.stopPropagation(); closeTerminalTab('${tabId}')" class="ml-1 hover:text-mil-error">
-          <i class="fa-solid fa-xmark text-[8px]"></i>
-        </span>
-      `;
-      tabBtn.onclick = () => switchTerminalTab(tabId);
-      tabsContainer.appendChild(tabBtn);
-
-      // Create terminal container
-      const termContainer = document.createElement('div');
-      termContainer.id = `panel-${tabId}`;
-      termContainer.className = 'absolute inset-0 p-2 pb-6 hidden';
-      panelsContainer.appendChild(termContainer);
-
-      // Initialize terminal
-      const term = new Terminal({
-        theme: {
-          background: '#0a0a0a',
-          foreground: '#e5e5e5',
-          cursor: '#f97316',
-          cursorAccent: '#0a0a0a',
-          selectionBackground: '#f9731650',
-          black: '#0a0a0a',
-          red: '#ef4444',
-          green: '#22c55e',
-          yellow: '#f97316',
-          blue: '#3b82f6',
-          magenta: '#a855f7',
-          cyan: '#06b6d4',
-          white: '#e5e5e5',
-        },
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 14,
-        cursorBlink: true,
-        cursorStyle: 'block',
-      });
-
-      const fitAddon = new FitAddon.FitAddon();
-      const webLinksAddon = new WebLinksAddon.WebLinksAddon();
-
-      term.loadAddon(fitAddon);
-      term.loadAddon(webLinksAddon);
-      term.open(termContainer);
-
-      // Store tab data
-      terminalTabs.set(tabId, { term, fitAddon, ws: null, container: termContainer, tabBtn });
-
-      // Switch to new tab
-      switchTerminalTab(tabId);
-
-      // Connect to WebSocket
-      connectTerminalWS(tabId);
-
-      // Handle resize
-      window.addEventListener('resize', () => {
-        if (terminalOpen && activeTabId === tabId) {
-          fitAddon.fit();
-        }
-      });
-    }
-
-    function switchTerminalTab(tabId) {
-      // Hide all panels and deactivate all tabs
-      terminalTabs.forEach((data, id) => {
-        data.container.classList.add('hidden');
-        data.tabBtn.classList.remove('border-mil-accent', 'text-mil-accent', 'bg-mil-dark');
-        data.tabBtn.classList.add('border-mil-border', 'text-mil-muted', 'bg-mil-card');
-      });
-
-      // Show selected panel and activate tab
-      const tab = terminalTabs.get(tabId);
-      if (tab) {
-        tab.container.classList.remove('hidden');
-        tab.tabBtn.classList.remove('border-mil-border', 'text-mil-muted', 'bg-mil-card');
-        tab.tabBtn.classList.add('border-mil-accent', 'text-mil-accent', 'bg-mil-dark');
-        activeTabId = tabId;
-
-        setTimeout(() => {
-          tab.fitAddon.fit();
-          tab.term.focus();
-        }, 50);
-
-        // Update status based on this tab's connection
-        updateTerminalStatus(tab.ws);
-      }
-    }
-
-    function closeTerminalTab(tabId) {
-      const tab = terminalTabs.get(tabId);
-      if (!tab) return;
-
-      // Close WebSocket
-      if (tab.ws) {
-        tab.ws.close();
-      }
-
-      // Remove DOM elements
-      tab.tabBtn.remove();
-      tab.container.remove();
-      tab.term.dispose();
-
-      // Remove from map
-      terminalTabs.delete(tabId);
-
-      // Switch to another tab or close terminal if none left
-      if (terminalTabs.size === 0) {
-        toggleTerminal();
-      } else {
-        const nextTabId = terminalTabs.keys().next().value;
-        switchTerminalTab(nextTabId);
-      }
-    }
-
-    function updateTerminalStatus(ws) {
-      const statusEl = document.getElementById('terminal-status');
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        statusEl.innerHTML = `
-          <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
-          CONNECTED
-        `;
-      } else {
-        statusEl.innerHTML = `
-          <span class="w-1.5 h-1.5 rounded-full bg-mil-error"></span>
-          DISCONNECTED
-        `;
-      }
-    }
-
-    function connectTerminalWS(tabId) {
-      const tab = terminalTabs.get(tabId);
-      if (!tab) return;
-
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/terminal`;
-
-      try {
-        const ws = new WebSocket(wsUrl);
-        tab.ws = ws;
-
-        ws.onopen = () => {
-          if (activeTabId === tabId) updateTerminalStatus(ws);
-          // Send initial resize
-          setTimeout(() => {
-            tab.fitAddon.fit();
-            const dims = tab.fitAddon.proposeDimensions();
-            if (dims) {
-              ws.send(`\x1b[8;${dims.rows};${dims.cols}t`);
-            }
-          }, 100);
-        };
-
-        ws.onmessage = (event) => {
-          tab.term.write(event.data);
-        };
-
-        ws.onclose = () => {
-          if (activeTabId === tabId) updateTerminalStatus(ws);
-          tab.term.write('\r\n\x1b[1;31m[DISCONNECTED]\x1b[0m Connection closed\r\n');
-        };
-
-        ws.onerror = () => {
-          if (activeTabId === tabId) updateTerminalStatus(ws);
-        };
-
-        tab.term.onData((data) => {
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(data);
-          }
-        });
-
-        // Handle terminal resize
-        tab.term.onResize(({ cols, rows }) => {
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(`\x1b[8;${rows};${cols}t`);
-          }
-        });
-
-      } catch (e) {
-        console.error('WebSocket connection failed:', e);
-        updateTerminalStatus(null);
-      }
-    }
-
   </script>
+  <script src="{{ url_for('static', filename='js/dashboard/ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard/terminal.js') }}"></script>
 </body>
+
 </html>

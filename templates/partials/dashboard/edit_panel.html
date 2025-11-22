@@ -1,0 +1,63 @@
+<!-- Slide Panel -->
+<div id="edit-overlay" class="fixed inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300"
+    onclick="toggleEditMode()"></div>
+<div id="edit-panel"
+    class="fixed top-0 right-0 h-full w-full max-w-md bg-mil-dark border-l border-mil-border z-50 transform translate-x-full transition-transform duration-300">
+    <div class="h-full flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-mil-border">
+            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ADD SERVICE</h2>
+            <button onclick="toggleEditMode()"
+                class="w-8 h-8 border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="add-app-form" class="space-y-5" hx-post="/api/apps/add" hx-target="#apps-container"
+                hx-swap="innerHTML">
+                <div>
+                    <label
+                        class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Service
+                        Name</label>
+                    <input name="name" required placeholder="e.g. Plex, Nextcloud"
+                        class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
+                </div>
+
+                <div>
+                    <label
+                        class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">URL
+                        / IP
+                        Address</label>
+                    <input name="url" required placeholder="e.g. 192.168.1.100:8080"
+                        class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
+                </div>
+
+                <div>
+                    <label
+                        class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Icon</label>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-14 h-14 bg-mil-black border border-mil-border flex items-center justify-center">
+                            <img id="icon-preview" src="{{ default_icon }}" alt="icon" class="w-10 h-10 object-contain">
+                        </div>
+                        <input type="hidden" id="icon-url" name="icon" value="{{ default_icon }}">
+                        <input id="icon-search" name="q" placeholder="Search icons..."
+                            class="flex-1 px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition"
+                            hx-get="/api/icons/search" hx-target="#icon-results"
+                            hx-trigger="load, keyup changed delay:250ms" />
+                    </div>
+                    <div id="icon-results"></div>
+                </div>
+
+                <div id="form-message"></div>
+
+                <button type="submit"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-mil-accent text-mil-black font-mono font-bold text-sm uppercase tracking-wider hover:bg-mil-accentDim transition-all">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    ADD TO DASHBOARD
+                    <span id="form-spinner" class="htmx-indicator"><i
+                            class="fa-solid fa-spinner animate-spin ml-2"></i></span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

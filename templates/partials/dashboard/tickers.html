@@ -1,0 +1,41 @@
+<!-- Stripe Header with Weather -->
+<div class="stripe-bg border-b border-mil-border" data-animate="fade">
+    <div class="max-w-7xl mx-auto px-6 h-8 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <span class="text-[9px] font-mono text-mil-muted uppercase tracking-widest">SYS.ONLINE</span>
+        </div>
+        <!-- Minimal Weather Bar -->
+        <div id="weather-bar" hx-get="/api/widgets/weather-bar" hx-trigger="load" hx-swap="innerHTML"
+            class="flex items-center gap-4">
+            <span class="text-[10px] font-mono text-mil-muted">WEATHER LOADING...</span>
+        </div>
+    </div>
+</div>
+
+<!-- News Ticker - Slowed Down -->
+<div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden" data-animate="slide-down">
+    <div class="relative flex items-center h-9">
+        <div
+            class="absolute left-0 z-10 px-4 h-full bg-mil-accent text-mil-black text-[10px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-mil-black animate-pulse"></span>
+            LIVE FEED
+        </div>
+        <div id="news-ticker" class="pl-28" hx-get="/api/widgets/headlines" hx-trigger="load" hx-swap="innerHTML">
+            <span class="px-8 text-xs font-mono text-mil-muted">LOADING DATA...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Crypto Ticker Bar -->
+<div class="crypto-ticker bg-mil-card border-b border-mil-border overflow-hidden" data-animate="slide-down">
+    <div class="relative flex items-center h-8">
+        <div
+            class="absolute left-0 z-10 px-3 h-full bg-mil-dark border-r border-mil-border text-[9px] font-mono font-bold flex items-center gap-2 uppercase tracking-wider text-mil-muted">
+            <i class="fa-solid fa-chart-line text-mil-accent"></i>
+            MARKETS
+        </div>
+        <div id="crypto-ticker" class="pl-24" hx-get="/api/widgets/crypto-bar" hx-trigger="load" hx-swap="innerHTML">
+            <span class="px-8 text-[10px] font-mono text-mil-muted">SYNCING...</span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,113 @@
+<div id="panel-integrations" class="tab-panel hidden">
+    <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Homelab Integrations</h2>
+        <p class="text-xs text-mil-muted">Connect your self-hosted apps for enhanced monitoring</p>
+    </div>
+
+    <div class="grid gap-6">
+        {% for name, config in settings.integrations.items() %}
+        <div class="bg-mil-card border border-mil-border p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 bg-mil-dark border border-mil-border flex items-center justify-center text-mil-accent text-xl">
+                        {% if name == 'pihole' %}
+                        <i class="fa-solid fa-shield-halved"></i>
+                        {% elif name == 'portainer' %}
+                        <i class="fa-brands fa-docker"></i>
+                        {% elif name == 'proxmox' %}
+                        <i class="fa-solid fa-server"></i>
+                        {% elif name == 'speedtest' %}
+                        <i class="fa-solid fa-gauge-high"></i>
+                        {% elif name == 'uptime_kuma' %}
+                        <i class="fa-solid fa-heart-pulse"></i>
+                        {% else %}
+                        <i class="fa-solid fa-plug"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-base font-mono uppercase tracking-wider text-mil-text">{{ name | replace('_', '
+                            ') }}</h3>
+                        <p class="text-[10px] text-mil-muted uppercase">
+                            {% if name == 'pihole' %}DNS Ad Blocker{% endif %}
+                            {% if name == 'portainer' %}Docker Management{% endif %}
+                            {% if name == 'proxmox' %}Virtualization Platform{% endif %}
+                            {% if name == 'speedtest' %}Network Speed Monitor{% endif %}
+                            {% if name == 'uptime_kuma' %}Service Monitoring{% endif %}
+                        </p>
+                    </div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" {% if config.enabled %}checked{% endif %}
+                        hx-post="/api/settings/integration/{{ name }}/toggle" hx-trigger="change" hx-swap="none">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <form hx-post="/api/settings/integration/{{ name }}" hx-trigger="submit" hx-swap="none"
+                class="grid gap-4 pt-4 border-t border-mil-border">
+
+                <div>
+                    <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">URL</label>
+                    <input type="text" name="url" value="{{ config.url or '' }}" placeholder="http://192.168.1.x:port"
+                        class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                </div>
+
+                {% if name in ['pihole', 'portainer', 'speedtest'] %}
+                <div>
+                    <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">API
+                        Key</label>
+                    <input type="password" name="api_key" value="{{ config.api_key or '' }}" placeholder="Enter API key"
+                        class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                </div>
+                {% endif %}
+
+                {% if name == 'proxmox' %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">User</label>
+                        <input type="text" name="user" value="{{ config.user or '' }}" placeholder="root@pam"
+                            class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Token
+                            Name</label>
+                        <input type="text" name="token_name" value="{{ config.token_name or '' }}"
+                            placeholder="api-token"
+                            class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Token
+                        Secret</label>
+                    <input type="password" name="token_secret" value="{{ config.token_secret or '' }}"
+                        placeholder="Enter token secret"
+                        class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                </div>
+                {% endif %}
+
+                {% if name == 'uptime_kuma' %}
+                <div>
+                    <label class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Status Page
+                        Slug</label>
+                    <input type="text" name="slug" value="{{ config.slug or 'default' }}" placeholder="default"
+                        class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                </div>
+                {% endif %}
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" hx-post="/api/settings/integration/{{ name }}/test" hx-swap="none"
+                        class="px-4 py-2 text-xs font-mono uppercase tracking-wider border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text transition-colors">
+                        <i class="fa-solid fa-plug mr-2"></i> Test Connection
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-mil-accent text-mil-black hover:bg-mil-accent/90 transition-colors">
+                        <i class="fa-solid fa-save mr-2"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>

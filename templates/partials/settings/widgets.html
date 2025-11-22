@@ -1,0 +1,47 @@
+<div id="panel-widgets" class="tab-panel">
+    <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Widget Visibility</h2>
+        <p class="text-xs text-mil-muted">Enable or disable widgets on your dashboard</p>
+    </div>
+
+    <div class="grid gap-4">
+        {% for name, config in settings.widgets.items() %}
+        <div class="flex items-center justify-between p-4 bg-mil-card border border-mil-border">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 bg-mil-dark border border-mil-border flex items-center justify-center text-mil-accent">
+                    {% if name == 'weather' %}
+                    <i class="fa-solid fa-cloud-sun"></i>
+                    {% elif name == 'crypto' %}
+                    <i class="fa-brands fa-bitcoin"></i>
+                    {% elif name == 'news' %}
+                    <i class="fa-brands fa-hacker-news"></i>
+                    {% elif name == 'reddit' %}
+                    <i class="fa-brands fa-reddit"></i>
+                    {% elif name == 'threats' %}
+                    <i class="fa-solid fa-shield-halved"></i>
+                    {% elif name == 'earthquakes' %}
+                    <i class="fa-solid fa-house-crack"></i>
+                    {% elif name == 'system_stats' %}
+                    <i class="fa-solid fa-server"></i>
+                    {% elif name == 'docker' %}
+                    <i class="fa-brands fa-docker"></i>
+                    {% else %}
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">{{ name | replace('_', ' ') }}
+                    </h3>
+                    <p class="text-[10px] text-mil-muted uppercase">Widget</p>
+                </div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if config.enabled %}checked{% endif %}
+                    hx-post="/api/settings/widget/{{ name }}/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+</div>

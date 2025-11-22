@@ -1,0 +1,56 @@
+<div id="panel-dashboard" class="tab-panel hidden">
+    <div class="mb-6">
+        <h2 class="text-lg font-mono uppercase tracking-wider text-mil-text mb-2">Dashboard Settings</h2>
+        <p class="text-xs text-mil-muted">Configure dashboard behavior</p>
+    </div>
+
+    <div class="bg-mil-card border border-mil-border p-6 space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Loading Screen</h3>
+                <p class="text-[10px] text-mil-muted">Show animated loading screen on startup</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.appearance.show_loading_screen %}checked{% endif %}
+                    hx-post="/api/settings/appearance/show_loading_screen/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">News Ticker</h3>
+                <p class="text-[10px] text-mil-muted">Show scrolling news ticker at bottom</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.dashboard.news_ticker_enabled %}checked{% endif %}
+                    hx-post="/api/settings/dashboard/news_ticker_enabled/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Weather Bar</h3>
+                <p class="text-[10px] text-mil-muted">Show weather info in top bar</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.dashboard.weather_bar_enabled %}checked{% endif %}
+                    hx-post="/api/settings/dashboard/weather_bar_enabled/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Crypto Ticker</h3>
+                <p class="text-[10px] text-mil-muted">Show crypto prices ticker</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" {% if settings.dashboard.crypto_bar_enabled %}checked{% endif %}
+                    hx-post="/api/settings/dashboard/crypto_bar_enabled/toggle" hx-trigger="change" hx-swap="none">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+</div>

@@ -60,11 +60,19 @@ homelab-dashboard/
 ├── app.py                    # Minimal entry point (~50 lines) - creates app, registers blueprints
 ├── homelab/
 │   ├── settings.py           # Settings management, themes (THEMES dict), defaults
-│   ├── widgets.py            # External API widgets (weather, news, crypto)
 │   ├── docker_utils.py       # Docker container fetching
 │   ├── system_stats.py       # System stats (CPU, RAM, etc)
 │   ├── app_store.py          # Service/app management
 │   ├── icon_service.py       # Icon search via Dashboard Icons API
+│   ├── utils/
+│   │   └── cache.py          # Shared caching utility
+│   ├── widgets/              # Widget modules package
+│   │   ├── __init__.py       # Exports widget functions
+│   │   ├── weather.py        # Weather widget
+│   │   ├── news.py           # News widgets (Hacker News, World Headlines)
+│   │   ├── crypto.py         # Crypto widget
+│   │   ├── social.py         # Reddit widget
+│   │   └── security.py       # Security widgets (Threats, Earthquakes)
 │   ├── integrations/         # External service integrations
 │   │   ├── __init__.py       # Exports all integration functions
 │   │   ├── pihole.py         # Pi-hole v5/v6 API integration
@@ -87,10 +95,11 @@ homelab-dashboard/
 │   └── partials/             # HTMX partial templates
 │       ├── apps.html
 │       ├── stats.html
-│       ├── widget_pihole.html
-│       ├── widget_speedtest.html
-│       ├── widget_weather.html
-│       ├── weather_bar.html
+│       ├── settings/         # Settings partials
+│       │   ├── appearance.html
+│       │   ├── dashboard.html
+│       │   ├── integrations.html
+│       │   └── widgets.html
 │       └── ... other widgets
 ├── static/
 │   ├── css/
@@ -98,7 +107,13 @@ homelab-dashboard/
 │   │   ├── dashboard.css     # Main dashboard styles (extracted from index.html)
 │   │   └── settings.css      # Settings page styles (extracted from settings.html)
 │   └── js/
-│       └── loading.js        # Three.js loading screen (server + terrain modes)
+│       ├── loading/          # Loading screen modules
+│       │   ├── core.js       # Main loading logic
+│       │   ├── viz_server.js # Server visualization
+│       │   ├── viz_terrain.js # Terrain visualization
+│       └── dashboard/        # Dashboard modules
+│           ├── ui.js         # UI logic (theme, drag-drop, location)
+│           └── terminal.js   # Terminal logic
 └── data/
     ├── settings.json         # Persisted settings (Docker volume)
     └── apps.json             # Saved services/apps (Docker volume)
@@ -108,6 +123,8 @@ homelab-dashboard/
 
 - **Blueprints**: Routes are organized into Flask Blueprints for better maintainability
 - **Services**: Business logic (like terminal handling) is extracted into services
+- **Modular Widgets**: Widget logic split into focused modules in `homelab/widgets/`
+- **Frontend Modules**: JavaScript split into modular files in `static/js/`
 - **CSS Extraction**: Inline styles moved to external CSS files for browser caching
 - **app.py**: Now a minimal ~50 line file that just creates the app and registers blueprints
 
@@ -231,14 +248,15 @@ python3 app.py
 
 ## Recent Changes
 
-- **Major Refactoring**: Restructured codebase following refactoring_guide.md
-  - app.py reduced from ~510 lines to ~50 lines
-  - Extracted routes into Flask Blueprints (main, api, settings, widgets)
-  - Extracted terminal WebSocket handler to services/terminal.py
-  - Extracted inline CSS to static/css/dashboard.css and settings.css
-- Added loading screen style selection (Server/Terrain) in Settings > Appearance
-- Fixed weather using Open-Meteo API (wttr.in was timing out from Docker)
-- Added temperature units support (F/C) based on location settings
-- Added Pi-hole diagnosis tracker showing errors/warnings from `/api/info/messages`
-- Fixed integrations not displaying on dashboard (HTMX sections were missing)
-- Fixed Pi-hole v6 authentication (requires `X-FTL-SID` header)
+- **Major Refactoring (Completed)**:
+  - **Widgets**: Modularized `homelab/widgets.py` into `homelab/widgets/` package with focused modules (weather, news, crypto, etc.).
+  - **Loading Screen**: Split `static/js/loading.js` into `core.js`, `viz_server.js`, `viz_terrain.js` in `static/js/loading/`.
+  - **Dashboard JS**: Extracted inline JS from `index.html` into `static/js/dashboard/ui.js` and `terminal.js`.
+  - **Settings**: Extracted settings tabs into partials in `templates/partials/settings/`.
+  - **Routes**: Merged duplicate route files and cleaned up imports.
+- **Features**:
+  - Added loading screen style selection (Server/Terrain).
+  - Fixed weather using Open-Meteo API.
+  - Added temperature units support (F/C).
+  - Added Pi-hole diagnosis tracker.
+  - Fixed Pi-hole v6 authentication.
