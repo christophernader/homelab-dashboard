@@ -120,3 +120,21 @@ def toggle_setting(section: str, key: str):
     new_value = not current
     set_setting(f'{section}.{key}', new_value)
     return {"status": "ok", "setting": f"{section}.{key}", "value": new_value}, 200
+
+
+@settings_bp.post("/api/settings/<section>/<key>")
+def set_setting_value(section: str, key: str):
+    """Set a setting value."""
+    value = request.form.get('value') or (request.json.get('value') if request.is_json else None)
+    if value is not None:
+        set_setting(f'{section}.{key}', value)
+        return {"status": "ok", "setting": f"{section}.{key}", "value": value}, 200
+    return {"status": "error", "message": "Bad request"}, 400
+
+
+@settings_bp.get("/api/settings/location")
+def get_location_settings():
+    """Get location settings."""
+    settings = load_settings()
+    location = settings.get('location', {})
+    return jsonify(location)

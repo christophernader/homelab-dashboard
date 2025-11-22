@@ -53,28 +53,34 @@ sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "docker 
 # nohup python3 app.py > /tmp/dashboard.log 2>&1 &
 ```
 
-## Project Structure
+## Project Structure (Refactored)
 
 ```
 homelab-dashboard/
-├── app.py                    # Main Flask app, routes, WebSocket terminal
+├── app.py                    # Minimal entry point (~50 lines) - creates app, registers blueprints
 ├── homelab/
-│   ├── settings.py           # Settings management, themes, defaults
+│   ├── settings.py           # Settings management, themes (THEMES dict), defaults
 │   ├── widgets.py            # External API widgets (weather, news, crypto)
 │   ├── docker_utils.py       # Docker container fetching
 │   ├── system_stats.py       # System stats (CPU, RAM, etc)
 │   ├── app_store.py          # Service/app management
 │   ├── icon_service.py       # Icon search via Dashboard Icons API
-│   ├── integrations/
+│   ├── integrations/         # External service integrations
 │   │   ├── __init__.py       # Exports all integration functions
 │   │   ├── pihole.py         # Pi-hole v5/v6 API integration
 │   │   ├── portainer.py      # Portainer API
 │   │   ├── proxmox.py        # Proxmox API
 │   │   ├── speedtest.py      # Speedtest Tracker / LibreSpeed
 │   │   └── uptime_kuma.py    # Uptime Kuma status pages
-│   └── routes/
-│       ├── settings_routes.py # Settings API endpoints
-│       └── widget_routes.py   # Widget API endpoints
+│   ├── routes/               # Flask Blueprints (extracted from app.py)
+│   │   ├── __init__.py       # Exports all blueprints
+│   │   ├── main.py           # Main page route (/)
+│   │   ├── api.py            # API endpoints (/api/stats, /api/apps, etc)
+│   │   ├── settings_routes.py # Settings endpoints (/settings, /api/settings/*)
+│   │   └── widgets.py        # Widget endpoints (/api/widgets/*)
+│   └── services/             # Business logic services
+│       ├── __init__.py       # Exports services
+│       └── terminal.py       # WebSocket terminal PTY handler
 ├── templates/
 │   ├── index.html            # Main dashboard page
 │   ├── settings.html         # Settings page
@@ -87,12 +93,23 @@ homelab-dashboard/
 │       ├── weather_bar.html
 │       └── ... other widgets
 ├── static/
-│   ├── css/animations.css
-│   └── js/loading.js         # Three.js loading screen
+│   ├── css/
+│   │   ├── animations.css    # Animation keyframes and utilities
+│   │   ├── dashboard.css     # Main dashboard styles (extracted from index.html)
+│   │   └── settings.css      # Settings page styles (extracted from settings.html)
+│   └── js/
+│       └── loading.js        # Three.js loading screen (server + terrain modes)
 └── data/
     ├── settings.json         # Persisted settings (Docker volume)
     └── apps.json             # Saved services/apps (Docker volume)
 ```
+
+### Architecture Notes
+
+- **Blueprints**: Routes are organized into Flask Blueprints for better maintainability
+- **Services**: Business logic (like terminal handling) is extracted into services
+- **CSS Extraction**: Inline styles moved to external CSS files for browser caching
+- **app.py**: Now a minimal ~50 line file that just creates the app and registers blueprints
 
 ## Current Feature State
 
@@ -214,6 +231,12 @@ python3 app.py
 
 ## Recent Changes
 
+- **Major Refactoring**: Restructured codebase following refactoring_guide.md
+  - app.py reduced from ~510 lines to ~50 lines
+  - Extracted routes into Flask Blueprints (main, api, settings, widgets)
+  - Extracted terminal WebSocket handler to services/terminal.py
+  - Extracted inline CSS to static/css/dashboard.css and settings.css
+- Added loading screen style selection (Server/Terrain) in Settings > Appearance
 - Fixed weather using Open-Meteo API (wttr.in was timing out from Docker)
 - Added temperature units support (F/C) based on location settings
 - Added Pi-hole diagnosis tracker showing errors/warnings from `/api/info/messages`

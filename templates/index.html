@@ -38,257 +38,14 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="/static/css/animations.css" />
-  <style>
-    /* Theme variables */
-    :root {
-      --mil-black: #0a0a0a;
-      --mil-dark: #111111;
-      --mil-card: #151515;
-      --mil-border: #252525;
-      --mil-text: #e5e5e5;
-      --mil-muted: #6b6b6b;
-    }
-
-    .light-mode {
-      --mil-black: #ffffff;
-      --mil-dark: #f8f8f8;
-      --mil-card: #ffffff;
-      --mil-border: #e0e0e0;
-      --mil-text: #1a1a1a;
-      --mil-muted: #666666;
-    }
-
-    body { -webkit-font-smoothing: antialiased; }
-
-    /* Premium shiny border effect - sharp military corners */
-    .shiny-border {
-      position: relative;
-      border: 1px solid var(--mil-border);
-      background: var(--mil-card);
-      box-shadow:
-        /* Inner highlight line */
-        inset 0 1px 0 0 rgba(255,255,255,0.06),
-        /* Depth shadow */
-        0 1px 2px rgba(0,0,0,0.2),
-        0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    /* Top edge highlight - the key shine effect */
-    .shiny-border::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg,
-        rgba(255,255,255,0.1) 0%,
-        rgba(255,255,255,0.25) 30%,
-        rgba(255,255,255,0.35) 50%,
-        rgba(255,255,255,0.25) 70%,
-        rgba(255,255,255,0.1) 100%
-      );
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* Subtle inner top glow */
-    .shiny-border::after {
-      content: '';
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      right: 1px;
-      height: 40%;
-      background: linear-gradient(180deg,
-        rgba(255,255,255,0.03) 0%,
-        transparent 100%
-      );
-      pointer-events: none;
-    }
-
-    /* Light mode adjustments */
-    .light-mode .shiny-border {
-      border-color: rgba(0,0,0,0.1);
-      box-shadow:
-        inset 0 1px 0 0 rgba(255,255,255,0.8),
-        0 1px 2px rgba(0,0,0,0.05),
-        0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .light-mode .shiny-border::before {
-      background: linear-gradient(90deg,
-        rgba(255,255,255,0.5) 0%,
-        rgba(255,255,255,0.95) 30%,
-        rgba(255,255,255,1) 50%,
-        rgba(255,255,255,0.95) 70%,
-        rgba(255,255,255,0.5) 100%
-      );
-    }
-
-    .light-mode .shiny-border::after {
-      background: linear-gradient(180deg,
-        rgba(255,255,255,0.5) 0%,
-        transparent 100%
-      );
-    }
-
-    /* Diagonal stripes header */
-    .stripe-bg {
-      background: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 4px,
-        rgba(255,255,255,0.03) 4px,
-        rgba(255,255,255,0.03) 8px
-      );
-    }
-
-    /* News ticker - slowed down */
-    .news-scroll { animation: scroll 150s linear infinite; }
-    .news-ticker:hover .news-scroll { animation-play-state: paused; }
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    /* Crypto ticker */
-    .crypto-scroll { animation: scroll 60s linear infinite; }
-    .crypto-ticker:hover .crypto-scroll { animation-play-state: paused; }
-
-    /* Dynamic Grid Background - More Pronounced */
-    .grid-background {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-      background:
-        /* Main grid lines */
-        linear-gradient(90deg, rgba(249, 115, 22, 0.08) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(249, 115, 22, 0.08) 1px, transparent 1px);
-      background-size: 50px 50px;
-      animation: gridMove 25s linear infinite;
-    }
-
-    .grid-background::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        /* Larger accent grid */
-        linear-gradient(90deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(249, 115, 22, 0.12) 1px, transparent 1px);
-      background-size: 150px 150px;
-      animation: gridMove 50s linear infinite reverse;
-    }
-
-    .grid-background::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 50% 50%, transparent 0%, var(--mil-black) 80%);
-    }
-
-    @keyframes gridMove {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(50px, 50px); }
-    }
-
-    .light-mode .grid-background {
-      background:
-        linear-gradient(90deg, rgba(249, 115, 22, 0.1) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(249, 115, 22, 0.1) 1px, transparent 1px);
-      background-size: 50px 50px;
-    }
-
-    .light-mode .grid-background::before {
-      background:
-        linear-gradient(90deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px);
-      background-size: 150px 150px;
-    }
-
-    /* Drag and drop - using SortableJS */
-    .sortable-ghost {
-      opacity: 0.4;
-      background: #1a1a1a !important;
-    }
-    .sortable-chosen {
-      box-shadow: 0 0 0 2px #f97316;
-    }
-    .sortable-drag {
-      opacity: 1 !important;
-    }
-
-    /* Progress bar animation */
-    .progress-bar {
-      transition: width 0.5s ease;
-    }
-
-    /* Glow effect */
-    .glow-accent {
-      box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
-    }
-
-    /* HTMX indicator */
-    .htmx-indicator { display: none; }
-    .htmx-request .htmx-indicator { display: inline-flex; }
-
-    /* Intel feed scrollbar */
-    .intel-feed::-webkit-scrollbar {
-      width: 4px;
-    }
-    .intel-feed::-webkit-scrollbar-track {
-      background: var(--mil-dark);
-    }
-    .intel-feed::-webkit-scrollbar-thumb {
-      background: var(--mil-border);
-      border-radius: 2px;
-    }
-    .intel-feed::-webkit-scrollbar-thumb:hover {
-      background: var(--mil-accent);
-    }
-
-    /* Pinout Labels for Loading Screen */
-    .pinout-label {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-family: 'JetBrains Mono', monospace;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      transform: translateY(10px);
-    }
-    .pinout-label.visible {
-      transform: translateY(0);
-    }
-    .pinout-label.left {
-      text-align: left;
-      padding-left: 20px;
-      border-left: 1px solid rgba(249, 115, 22, 0.4);
-    }
-    .pinout-label.right {
-      text-align: right;
-      padding-right: 20px;
-      border-right: 1px solid rgba(249, 115, 22, 0.4);
-    }
-    .pinout-title {
-      font-size: 9px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-    }
-    .pinout-value {
-      font-size: 11px;
-      color: #f97316;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-  </style>
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
   <!-- Three.js & Loading Screen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Pass loading screen settings from server
+    window.loadingScreenStyle = '{{ appearance.loading_screen_style | default("server") }}';
+    window.showLoadingScreen = {{ 'true' if appearance.show_loading_screen | default(true) else 'false' }};
+  </script>
   <script src="/static/js/loading.js" defer></script>
 </head>
 <body class="min-h-screen bg-mil-black text-mil-text font-sans relative">
@@ -300,98 +57,41 @@
     <!-- Pinout Labels Container -->
     <div id="pinout-labels" class="absolute inset-0 z-[5] pointer-events-none"></div>
 
-    <!-- HUD Overlay -->
+    <!-- Minimal HUD Overlay -->
     <div class="relative z-10 flex flex-col h-full pointer-events-none">
-      <!-- Top HUD -->
-      <div class="flex justify-between items-start p-6">
-        <!-- Top Left -->
-        <div class="space-y-2">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-[#f97316] animate-pulse"></div>
-            <span class="text-[10px] font-mono text-[#f97316] uppercase tracking-[0.3em]">SYSTEM INITIALIZING</span>
-          </div>
-          <div class="text-[10px] font-mono text-[#666] uppercase tracking-wider" id="boot-time">00:00:00</div>
+      <!-- Top Left - System Status -->
+      <div class="absolute top-6 left-6">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-1.5 h-1.5 bg-[#f97316] animate-pulse"></div>
+          <span class="text-[9px] font-mono text-[#f97316] uppercase tracking-[0.2em]">SYSTEM SCAN</span>
         </div>
-
-        <!-- Top Right -->
-        <div class="text-right space-y-1">
-          <div class="text-[10px] font-mono text-[#444] uppercase tracking-wider">HOMELAB CONTROL</div>
-          <div class="text-[10px] font-mono text-[#f97316] uppercase tracking-[0.2em]">v2.0.45</div>
-        </div>
+        <div class="text-[9px] font-mono text-[#444]" id="boot-time">00:00:00</div>
       </div>
 
-      <!-- Center Content -->
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <div class="relative">
-          <!-- Scanning lines effect -->
-          <div class="absolute -inset-20 border border-[#f97316]/20"></div>
-          <div class="absolute -inset-16 border border-[#f97316]/10"></div>
+      <!-- Top Right - Version -->
+      <div class="absolute top-6 right-6 text-right">
+        <div class="text-[9px] font-mono text-[#333] uppercase tracking-wider">HOMELAB</div>
+        <div class="text-[9px] font-mono text-[#f97316]/60">v2.1</div>
+      </div>
 
-          <!-- Main Title -->
-          <div class="text-center space-y-4">
-            <div class="flex items-center justify-center gap-4">
-              <div class="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#f97316]/50"></div>
-              <div class="w-10 h-10 border border-[#f97316] flex items-center justify-center">
-                <i class="fa-solid fa-server text-[#f97316]"></i>
-              </div>
-              <div class="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#f97316]/50"></div>
-            </div>
-            <h1 class="text-2xl font-mono font-bold tracking-[0.5em] text-white">HOMELAB</h1>
-            <p class="text-[10px] font-mono text-[#666] uppercase tracking-[0.3em]">TACTICAL OPERATIONS CENTER</p>
-          </div>
-        </div>
-
-        <!-- Loading Bar -->
-        <div class="mt-16 w-72">
+      <!-- Bottom Progress Bar - Full Width -->
+      <div class="absolute bottom-0 left-0 right-0 p-6">
+        <div class="max-w-md mx-auto">
           <div class="flex justify-between mb-2">
-            <span class="text-[10px] font-mono text-[#666] uppercase tracking-wider">LOADING SYSTEMS</span>
-            <span class="text-[10px] font-mono text-[#f97316]" id="load-percent">0%</span>
+            <span class="text-[9px] font-mono text-[#444] uppercase tracking-wider" id="load-status">INITIALIZING...</span>
+            <span class="text-[9px] font-mono text-[#f97316]" id="load-percent">0%</span>
           </div>
-          <div class="h-[2px] bg-[#222] overflow-hidden">
+          <div class="h-[1px] bg-[#222] overflow-hidden">
             <div id="load-bar" class="h-full bg-[#f97316] transition-all duration-100" style="width: 0%"></div>
           </div>
-          <div class="mt-3 text-[10px] font-mono text-[#444] uppercase tracking-wider text-center" id="load-status">
-            INITIALIZING CORE SYSTEMS...
-          </div>
         </div>
       </div>
 
-      <!-- Bottom HUD -->
-      <div class="flex justify-between items-end p-6">
-        <!-- Bottom Left - Coordinates -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-mono text-[#444] uppercase">GRID REF</div>
-          <div class="text-[10px] font-mono text-[#666]" id="grid-ref">47.6062° N, 122.3321° W</div>
-        </div>
-
-        <!-- Bottom Center - Status indicators -->
-        <div class="flex gap-6">
-          <div class="text-center">
-            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">NET</div>
-            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse"></div>
-          </div>
-          <div class="text-center">
-            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">SYS</div>
-            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse" style="animation-delay: 0.2s"></div>
-          </div>
-          <div class="text-center">
-            <div class="text-[10px] font-mono text-[#444] uppercase mb-1">SEC</div>
-            <div class="w-2 h-2 bg-[#22c55e] mx-auto animate-pulse" style="animation-delay: 0.4s"></div>
-          </div>
-        </div>
-
-        <!-- Bottom Right -->
-        <div class="text-right space-y-1">
-          <div class="text-[10px] font-mono text-[#444] uppercase">TERRAIN ANALYSIS</div>
-          <div class="text-[10px] font-mono text-[#f97316]" id="terrain-status">MAPPING...</div>
-        </div>
-      </div>
-
-      <!-- Corner brackets -->
-      <div class="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-[#f97316]/30"></div>
-      <div class="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-[#f97316]/30"></div>
-      <div class="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-[#f97316]/30"></div>
-      <div class="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-[#f97316]/30"></div>
+      <!-- Corner brackets - subtle -->
+      <div class="absolute top-4 left-4 w-6 h-6 border-l border-t border-[#f97316]/20"></div>
+      <div class="absolute top-4 right-4 w-6 h-6 border-r border-t border-[#f97316]/20"></div>
+      <div class="absolute bottom-4 left-4 w-6 h-6 border-l border-b border-[#f97316]/20"></div>
+      <div class="absolute bottom-4 right-4 w-6 h-6 border-r border-b border-[#f97316]/20"></div>
     </div>
   </div>
 
