@@ -34,4 +34,5 @@ def index():
         integrations=integrations,
         location=location,
         appearance=appearance,
+        dashboard=settings.get('dashboard', {}),
     )

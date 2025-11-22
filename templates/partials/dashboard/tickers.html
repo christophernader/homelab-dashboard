@@ -1,4 +1,5 @@
 <!-- Stripe Header with Weather -->
+{% if dashboard.weather_bar_enabled %}
 <div class="stripe-bg border-b border-mil-border" data-animate="fade">
     <div class="max-w-7xl mx-auto px-6 h-8 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -11,8 +12,10 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- News Ticker - Slowed Down -->
+{% if dashboard.news_ticker_enabled %}
 <div class="news-ticker bg-mil-dark border-b border-mil-border overflow-hidden" data-animate="slide-down">
     <div class="relative flex items-center h-9">
         <div
@@ -25,8 +28,10 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Crypto Ticker Bar -->
+{% if dashboard.crypto_bar_enabled %}
 <div class="crypto-ticker bg-mil-card border-b border-mil-border overflow-hidden" data-animate="slide-down">
     <div class="relative flex items-center h-8">
         <div
@@ -39,3 +44,4 @@
         </div>
     </div>
 </div>
+{% endif %}
