@@ -1,118 +1,40 @@
 /**
- * Military-style Loading Screen with Three.js Perlin Noise Terrain
- * Actually preloads dashboard data during the animation
+ * Military-style Loading Screen with 3D Wireframe Server Object
+ * Features animated pinout lines showing dynamic system specs
  */
-
-// Simplex Noise implementation
-class SimplexNoise {
-  constructor(seed = Math.random()) {
-    this.p = new Uint8Array(256);
-    this.perm = new Uint8Array(512);
-    this.permMod12 = new Uint8Array(512);
-
-    for (let i = 0; i < 256; i++) this.p[i] = i;
-
-    let n, q;
-    for (let i = 255; i > 0; i--) {
-      seed = (seed * 16807) % 2147483647;
-      n = seed % (i + 1);
-      q = this.p[i];
-      this.p[i] = this.p[n];
-      this.p[n] = q;
-    }
-
-    for (let i = 0; i < 512; i++) {
-      this.perm[i] = this.p[i & 255];
-      this.permMod12[i] = this.perm[i] % 12;
-    }
-  }
-
-  noise2D(x, y) {
-    const F2 = 0.5 * (Math.sqrt(3) - 1);
-    const G2 = (3 - Math.sqrt(3)) / 6;
-    const grad3 = [
-      [1, 1], [-1, 1], [1, -1], [-1, -1],
-      [1, 0], [-1, 0], [0, 1], [0, -1],
-      [1, 1], [-1, 1], [1, -1], [-1, -1]
-    ];
-
-    let n0, n1, n2;
-    const s = (x + y) * F2;
-    const i = Math.floor(x + s);
-    const j = Math.floor(y + s);
-    const t = (i + j) * G2;
-    const X0 = i - t;
-    const Y0 = j - t;
-    const x0 = x - X0;
-    const y0 = y - Y0;
-
-    let i1, j1;
-    if (x0 > y0) { i1 = 1; j1 = 0; }
-    else { i1 = 0; j1 = 1; }
-
-    const x1 = x0 - i1 + G2;
-    const y1 = y0 - j1 + G2;
-    const x2 = x0 - 1 + 2 * G2;
-    const y2 = y0 - 1 + 2 * G2;
-
-    const ii = i & 255;
-    const jj = j & 255;
-    const gi0 = this.permMod12[ii + this.perm[jj]];
-    const gi1 = this.permMod12[ii + i1 + this.perm[jj + j1]];
-    const gi2 = this.permMod12[ii + 1 + this.perm[jj + 1]];
-
-    let t0 = 0.5 - x0 * x0 - y0 * y0;
-    if (t0 < 0) n0 = 0;
-    else {
-      t0 *= t0;
-      n0 = t0 * t0 * (grad3[gi0][0] * x0 + grad3[gi0][1] * y0);
-    }
-
-    let t1 = 0.5 - x1 * x1 - y1 * y1;
-    if (t1 < 0) n1 = 0;
-    else {
-      t1 *= t1;
-      n1 = t1 * t1 * (grad3[gi1][0] * x1 + grad3[gi1][1] * y1);
-    }
-
-    let t2 = 0.5 - x2 * x2 - y2 * y2;
-    if (t2 < 0) n2 = 0;
-    else {
-      t2 *= t2;
-      n2 = t2 * t2 * (grad3[gi2][0] * x2 + grad3[gi2][1] * y2);
-    }
-
-    return 70 * (n0 + n1 + n2);
-  }
-}
 
 // Loading Screen Controller
 const LoadingScreen = (function() {
-  let scene, camera, renderer, terrain, animationId;
-  let noise, time = 0;
-  let loadProgress = 0;
-  let dataLoaded = {
-    apps: false,
-    stats: false,
-    threats: false,
-    weather: false,
-    crypto: false,
-    news: false,
-    headlines: false
-  };
+  let scene, camera, renderer, serverGroup, animationId;
+  let time = 0;
+  let systemData = null;
+  let pinoutLines = [];
+  let pinoutLabels = [];
 
   const loadingSteps = [
+    { key: 'system', endpoint: '/api/system-info', message: 'SCANNING HARDWARE...', weight: 20 },
     { key: 'apps', endpoint: '/api/apps', message: 'LOADING SERVICES...', weight: 15 },
-    { key: 'stats', endpoint: '/api/stats', message: 'FETCHING SYSTEM METRICS...', weight: 10 },
-    { key: 'threats', endpoint: '/api/widgets/threats-full', message: 'SCANNING GLOBAL THREATS...', weight: 20 },
-    { key: 'weather', endpoint: '/api/widgets/weather-bar', message: 'ACQUIRING WEATHER DATA...', weight: 10 },
-    { key: 'crypto', endpoint: '/api/widgets/crypto-bar', message: 'SYNCING MARKET DATA...', weight: 10 },
-    { key: 'news', endpoint: '/api/widgets/news-detailed', message: 'DOWNLOADING INTEL FEEDS...', weight: 15 },
-    { key: 'headlines', endpoint: '/api/widgets/headlines', message: 'AGGREGATING HEADLINES...', weight: 20 }
+    { key: 'stats', endpoint: '/api/stats', message: 'FETCHING METRICS...', weight: 10 },
+    { key: 'threats', endpoint: '/api/widgets/threats-full', message: 'THREAT ANALYSIS...', weight: 15 },
+    { key: 'weather', endpoint: '/api/widgets/weather-bar', message: 'WEATHER DATA...', weight: 10 },
+    { key: 'crypto', endpoint: '/api/widgets/crypto-bar', message: 'MARKET SYNC...', weight: 10 },
+    { key: 'news', endpoint: '/api/widgets/news-detailed', message: 'INTEL FEEDS...', weight: 10 },
+    { key: 'headlines', endpoint: '/api/widgets/headlines', message: 'AGGREGATING...', weight: 10 }
   ];
 
-  // Store preloaded data for injection
   window.preloadedData = {};
+
+  // Pinout configuration - positions relative to server object
+  const pinoutConfig = [
+    { id: 'hostname', label: 'HOSTNAME', side: 'left', yOffset: 0.8, getValue: d => d?.hostname || 'UNKNOWN' },
+    { id: 'platform', label: 'PLATFORM', side: 'left', yOffset: 0.4, getValue: d => `${d?.platform || 'N/A'} ${d?.architecture || ''}` },
+    { id: 'cpu', label: 'CPU', side: 'left', yOffset: 0, getValue: d => `${d?.cpu_cores || '?'} CORES @ ${d?.cpu_percent || 0}%` },
+    { id: 'ram', label: 'MEMORY', side: 'left', yOffset: -0.4, getValue: d => `${d?.ram_used || '?'} / ${d?.ram_total || '?'}` },
+    { id: 'disk', label: 'STORAGE', side: 'right', yOffset: 0.8, getValue: d => `${d?.disk_used || '?'} / ${d?.disk_total || '?'}` },
+    { id: 'containers', label: 'CONTAINERS', side: 'right', yOffset: 0.4, getValue: d => `${d?.containers_running || 0} / ${d?.containers_total || 0} ACTIVE` },
+    { id: 'network', label: 'NETWORK', side: 'right', yOffset: 0, getValue: d => d?.ip_address || 'N/A' },
+    { id: 'uptime', label: 'UPTIME', side: 'right', yOffset: -0.4, getValue: d => d?.uptime || 'N/A' },
+  ];
 
   function init() {
     const container = document.getElementById('terrain-container');
@@ -123,11 +45,11 @@ const LoadingScreen = (function() {
 
     // Scene setup
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0a0a0a, 0.015);
+    scene.fog = new THREE.FogExp2(0x0a0a0a, 0.008);
 
     // Camera
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 15, 30);
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 12);
     camera.lookAt(0, 0, 0);
 
     // Renderer
@@ -137,19 +59,17 @@ const LoadingScreen = (function() {
     renderer.setClearColor(0x0a0a0a, 1);
     container.appendChild(renderer.domElement);
 
-    // Noise generator
-    noise = new SimplexNoise();
+    // Create server object
+    createServerObject();
 
-    // Create terrain
-    createTerrain();
-
-    // Add grid helper
-    const gridHelper = new THREE.GridHelper(100, 50, 0x1a1a1a, 0x1a1a1a);
-    gridHelper.position.y = -5;
-    scene.add(gridHelper);
+    // Create pinout lines (initially hidden)
+    createPinoutLines();
 
     // Add ambient particles
     createParticles();
+
+    // Add floor grid
+    createFloorGrid();
 
     // Handle resize
     window.addEventListener('resize', onResize);
@@ -157,89 +77,290 @@ const LoadingScreen = (function() {
     // Start animation
     animate();
 
-    // Start actual data loading
+    // Start data loading
     loadAllData();
 
     // Update boot time
     updateBootTime();
   }
 
-  function createTerrain() {
-    const geometry = new THREE.PlaneGeometry(80, 80, 100, 100);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xf97316,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.3
-    });
+  function createServerObject() {
+    serverGroup = new THREE.Group();
 
-    terrain = new THREE.Mesh(geometry, material);
-    terrain.rotation.x = -Math.PI / 2;
-    terrain.position.y = -2;
-    scene.add(terrain);
+    // Main server body - rectangular box like a server rack unit
+    const bodyGeometry = new THREE.BoxGeometry(3, 2, 1.5);
+    const bodyEdges = new THREE.EdgesGeometry(bodyGeometry);
+    const bodyLine = new THREE.LineSegments(
+      bodyEdges,
+      new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.8 })
+    );
+    serverGroup.add(bodyLine);
 
-    updateTerrain();
-  }
+    // Inner wireframe details - circuit board pattern
+    const innerGroup = new THREE.Group();
 
-  function updateTerrain() {
-    if (!terrain) return;
-
-    const positions = terrain.geometry.attributes.position;
-    const vertex = new THREE.Vector3();
-
-    for (let i = 0; i < positions.count; i++) {
-      vertex.fromBufferAttribute(positions, i);
-
-      const noiseValue =
-        noise.noise2D(vertex.x * 0.05 + time * 0.5, vertex.y * 0.05) * 3 +
-        noise.noise2D(vertex.x * 0.1 + time * 0.3, vertex.y * 0.1) * 1.5 +
-        noise.noise2D(vertex.x * 0.02, vertex.y * 0.02 + time * 0.2) * 5;
-
-      positions.setZ(i, noiseValue);
+    // Horizontal circuit lines
+    for (let y = -0.6; y <= 0.6; y += 0.3) {
+      const points = [
+        new THREE.Vector3(-1.4, y, 0.76),
+        new THREE.Vector3(1.4, y, 0.76)
+      ];
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(lineGeom, new THREE.LineBasicMaterial({
+        color: 0xf97316, transparent: true, opacity: 0.3
+      }));
+      innerGroup.add(line);
     }
 
-    positions.needsUpdate = true;
-    terrain.geometry.computeVertexNormals();
+    // Vertical circuit lines
+    for (let x = -1.2; x <= 1.2; x += 0.4) {
+      const points = [
+        new THREE.Vector3(x, -0.8, 0.76),
+        new THREE.Vector3(x, 0.8, 0.76)
+      ];
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(lineGeom, new THREE.LineBasicMaterial({
+        color: 0xf97316, transparent: true, opacity: 0.2
+      }));
+      innerGroup.add(line);
+    }
+
+    // CPU/processor square
+    const cpuGeometry = new THREE.PlaneGeometry(0.6, 0.6);
+    const cpuEdges = new THREE.EdgesGeometry(cpuGeometry);
+    const cpuLine = new THREE.LineSegments(
+      cpuEdges,
+      new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.9 })
+    );
+    cpuLine.position.set(-0.5, 0.2, 0.76);
+    innerGroup.add(cpuLine);
+
+    // RAM slots
+    for (let i = 0; i < 4; i++) {
+      const ramGeometry = new THREE.PlaneGeometry(0.15, 0.5);
+      const ramEdges = new THREE.EdgesGeometry(ramGeometry);
+      const ramLine = new THREE.LineSegments(
+        ramEdges,
+        new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.6 })
+      );
+      ramLine.position.set(0.3 + i * 0.2, 0.2, 0.76);
+      innerGroup.add(ramLine);
+    }
+
+    // Storage indicators
+    for (let i = 0; i < 3; i++) {
+      const diskGeometry = new THREE.PlaneGeometry(0.3, 0.2);
+      const diskEdges = new THREE.EdgesGeometry(diskGeometry);
+      const diskLine = new THREE.LineSegments(
+        diskEdges,
+        new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.5 })
+      );
+      diskLine.position.set(-0.8 + i * 0.4, -0.5, 0.76);
+      innerGroup.add(diskLine);
+    }
+
+    serverGroup.add(innerGroup);
+
+    // Corner brackets for military look
+    const bracketMaterial = new THREE.LineBasicMaterial({ color: 0xf97316, transparent: true, opacity: 1 });
+    const bracketSize = 0.3;
+    const corners = [
+      [-1.5, 1, 0.75], [1.5, 1, 0.75], [-1.5, -1, 0.75], [1.5, -1, 0.75]
+    ];
+
+    corners.forEach(([x, y, z], i) => {
+      const xDir = x > 0 ? -1 : 1;
+      const yDir = y > 0 ? -1 : 1;
+
+      // Horizontal part
+      const hPoints = [
+        new THREE.Vector3(x, y, z),
+        new THREE.Vector3(x + bracketSize * xDir, y, z)
+      ];
+      const hGeom = new THREE.BufferGeometry().setFromPoints(hPoints);
+      serverGroup.add(new THREE.Line(hGeom, bracketMaterial));
+
+      // Vertical part
+      const vPoints = [
+        new THREE.Vector3(x, y, z),
+        new THREE.Vector3(x, y + bracketSize * yDir, z)
+      ];
+      const vGeom = new THREE.BufferGeometry().setFromPoints(vPoints);
+      serverGroup.add(new THREE.Line(vGeom, bracketMaterial));
+    });
+
+    // Scanning line effect
+    const scanGeometry = new THREE.PlaneGeometry(3.2, 0.02);
+    const scanMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide
+    });
+    const scanLine = new THREE.Mesh(scanGeometry, scanMaterial);
+    scanLine.position.z = 0.77;
+    scanLine.name = 'scanLine';
+    serverGroup.add(scanLine);
+
+    scene.add(serverGroup);
+  }
+
+  function createPinoutLines() {
+    const labelContainer = document.getElementById('pinout-labels');
+    if (!labelContainer) return;
+
+    pinoutConfig.forEach((config, index) => {
+      // Create 3D line from server to edge
+      const isLeft = config.side === 'left';
+      const startX = isLeft ? -1.6 : 1.6;
+      const endX = isLeft ? -4 : 4;
+      const y = config.yOffset;
+
+      // Line points with elbow
+      const points = [
+        new THREE.Vector3(startX, y, 0.5),
+        new THREE.Vector3(startX + (isLeft ? -0.5 : 0.5), y, 0.5),
+        new THREE.Vector3(endX, y, 0.5)
+      ];
+
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({
+        color: 0xf97316,
+        transparent: true,
+        opacity: 0
+      });
+      const line = new THREE.Line(lineGeom, lineMat);
+      line.userData = { targetOpacity: 0.6, config };
+      scene.add(line);
+      pinoutLines.push(line);
+
+      // Create HTML label
+      const label = document.createElement('div');
+      label.className = `pinout-label ${isLeft ? 'left' : 'right'}`;
+      label.innerHTML = `
+        <span class="pinout-title">${config.label}</span>
+        <span class="pinout-value" id="pinout-${config.id}">---</span>
+      `;
+      label.style.opacity = '0';
+      labelContainer.appendChild(label);
+      pinoutLabels.push({ element: label, config, index });
+    });
+  }
+
+  function updatePinoutLabels() {
+    if (!systemData) return;
+
+    pinoutLabels.forEach(({ element, config }) => {
+      const valueEl = element.querySelector('.pinout-value');
+      if (valueEl) {
+        valueEl.textContent = config.getValue(systemData);
+      }
+    });
+  }
+
+  function showPinouts() {
+    // Animate pinout lines appearing
+    pinoutLines.forEach((line, i) => {
+      setTimeout(() => {
+        line.material.opacity = line.userData.targetOpacity;
+      }, i * 100);
+    });
+
+    // Animate labels appearing
+    pinoutLabels.forEach(({ element }, i) => {
+      setTimeout(() => {
+        element.style.opacity = '1';
+        element.classList.add('visible');
+      }, i * 100 + 50);
+    });
   }
 
   function createParticles() {
-    const particleCount = 200;
+    const particleCount = 100;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 100;
-      positions[i * 3 + 1] = Math.random() * 30;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+      positions[i * 3] = (Math.random() - 0.5) * 30;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const material = new THREE.PointsMaterial({
       color: 0xf97316,
-      size: 0.1,
+      size: 0.03,
       transparent: true,
-      opacity: 0.5
+      opacity: 0.4
     });
 
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
   }
 
+  function createFloorGrid() {
+    const gridHelper = new THREE.GridHelper(30, 30, 0x1a1a1a, 0x1a1a1a);
+    gridHelper.position.y = -3;
+    scene.add(gridHelper);
+
+    // Add subtle glow plane
+    const planeGeometry = new THREE.PlaneGeometry(30, 30);
+    const planeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.02,
+      side: THREE.DoubleSide
+    });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotation.x = -Math.PI / 2;
+    plane.position.y = -2.99;
+    scene.add(plane);
+  }
+
   function animate() {
     animationId = requestAnimationFrame(animate);
+    time += 0.01;
 
-    time += 0.008;
+    if (serverGroup) {
+      // Gentle rotation
+      serverGroup.rotation.y = Math.sin(time * 0.3) * 0.2;
+      serverGroup.rotation.x = Math.sin(time * 0.2) * 0.05;
 
-    // Update terrain
-    updateTerrain();
+      // Scanning line animation
+      const scanLine = serverGroup.getObjectByName('scanLine');
+      if (scanLine) {
+        scanLine.position.y = Math.sin(time * 2) * 0.9;
+        scanLine.material.opacity = 0.3 + Math.sin(time * 4) * 0.2;
+      }
+    }
 
-    // Rotate camera slowly around terrain
-    camera.position.x = Math.sin(time * 0.2) * 25;
-    camera.position.z = Math.cos(time * 0.2) * 30;
-    camera.lookAt(0, 0, 0);
+    // Update pinout line positions to follow rotation
+    updatePinoutPositions();
 
     renderer.render(scene, camera);
+  }
+
+  function updatePinoutPositions() {
+    if (!pinoutLabels.length) return;
+
+    pinoutLabels.forEach(({ element, config, index }) => {
+      const isLeft = config.side === 'left';
+
+      // Calculate screen position based on 3D position
+      const baseY = config.yOffset;
+      const screenY = 50 - (baseY * 15); // Convert to percentage
+
+      element.style.top = `${screenY}%`;
+
+      if (isLeft) {
+        element.style.left = '5%';
+        element.style.right = 'auto';
+      } else {
+        element.style.right = '5%';
+        element.style.left = 'auto';
+      }
+    });
   }
 
   function onResize() {
@@ -253,48 +374,71 @@ const LoadingScreen = (function() {
     const loadBar = document.getElementById('load-bar');
     const loadPercent = document.getElementById('load-percent');
     const loadStatus = document.getElementById('load-status');
-    const terrainStatus = document.getElementById('terrain-status');
 
     let completedWeight = 0;
 
-    // Load each endpoint
     for (const step of loadingSteps) {
       if (loadStatus) loadStatus.textContent = step.message;
 
       try {
         const response = await fetch(step.endpoint);
         if (response.ok) {
-          const html = await response.text();
-          window.preloadedData[step.key] = html;
-          dataLoaded[step.key] = true;
+          if (step.key === 'system') {
+            systemData = await response.json();
+            updatePinoutLabels();
+            showPinouts();
+          } else {
+            const html = await response.text();
+            window.preloadedData[step.key] = html;
+          }
         }
       } catch (e) {
         console.warn(`Failed to preload ${step.key}:`, e);
       }
 
       completedWeight += step.weight;
-      loadProgress = completedWeight;
 
-      if (loadBar) loadBar.style.width = loadProgress + '%';
-      if (loadPercent) loadPercent.textContent = Math.floor(loadProgress) + '%';
-
-      // Update terrain status
-      if (terrainStatus) {
-        if (loadProgress < 30) terrainStatus.textContent = 'MAPPING...';
-        else if (loadProgress < 60) terrainStatus.textContent = 'ANALYZING...';
-        else if (loadProgress < 90) terrainStatus.textContent = 'RENDERING...';
-        else terrainStatus.textContent = 'COMPLETE';
-      }
+      if (loadBar) loadBar.style.width = completedWeight + '%';
+      if (loadPercent) loadPercent.textContent = Math.floor(completedWeight) + '%';
     }
 
-    // Final
+    // Final - show READY and wait for mouse movement
     if (loadBar) loadBar.style.width = '100%';
     if (loadPercent) loadPercent.textContent = '100%';
-    if (loadStatus) loadStatus.textContent = 'ALL SYSTEMS OPERATIONAL';
-    if (terrainStatus) terrainStatus.textContent = 'COMPLETE';
+    if (loadStatus) {
+      loadStatus.innerHTML = '<span class="text-[#22c55e]">SYSTEM READY</span><br><span class="text-[#666] text-[8px] mt-2 block animate-pulse">MOVE MOUSE TO CONTINUE</span>';
+    }
 
-    // Short delay then finish
-    setTimeout(finishLoading, 600);
+    // Wait for mouse movement to dismiss
+    waitForMouseToDismiss();
+  }
+
+  function waitForMouseToDismiss() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (!loadingScreen) return;
+
+    // Re-enable pointer events so we can detect mouse movement
+    loadingScreen.style.pointerEvents = 'auto';
+    loadingScreen.style.cursor = 'none';
+
+    let dismissed = false;
+
+    const handleInteraction = (e) => {
+      if (dismissed) return;
+      dismissed = true;
+
+      // Remove listeners
+      loadingScreen.removeEventListener('mousemove', handleInteraction);
+      loadingScreen.removeEventListener('click', handleInteraction);
+      loadingScreen.removeEventListener('touchstart', handleInteraction);
+
+      finishLoading();
+    };
+
+    // Listen for any interaction
+    loadingScreen.addEventListener('mousemove', handleInteraction);
+    loadingScreen.addEventListener('click', handleInteraction);
+    loadingScreen.addEventListener('touchstart', handleInteraction);
   }
 
   function updateBootTime() {
@@ -327,31 +471,23 @@ const LoadingScreen = (function() {
     const loadingScreen = document.getElementById('loading-screen');
     if (!loadingScreen) return;
 
-    // Mark body as loaded for animations
     document.body.classList.add('loaded');
 
-    // Fade out loading screen
     loadingScreen.style.transition = 'opacity 0.5s ease-out';
     loadingScreen.style.opacity = '0';
 
     setTimeout(() => {
-      // Cleanup Three.js
       if (animationId) cancelAnimationFrame(animationId);
       if (renderer) renderer.dispose();
       window.removeEventListener('resize', onResize);
 
       loadingScreen.remove();
-
-      // Trigger entrance animations
       triggerEntranceAnimations();
-
-      // Inject preloaded data into containers
       injectPreloadedData();
     }, 500);
   }
 
   function triggerEntranceAnimations() {
-    // Stagger animate elements with data-animate attribute
     const elements = document.querySelectorAll('[data-animate]');
     elements.forEach((el, index) => {
       el.style.animationDelay = `${index * 0.08}s`;
@@ -360,7 +496,6 @@ const LoadingScreen = (function() {
   }
 
   function injectPreloadedData() {
-    // Inject preloaded HTML into containers if available
     const injections = [
       { key: 'apps', target: '#apps-container' },
       { key: 'stats', target: '#live-stats' },
@@ -372,7 +507,6 @@ const LoadingScreen = (function() {
         const container = document.querySelector(target);
         if (container) {
           container.innerHTML = window.preloadedData[key];
-          // Re-init sortable if apps
           if (key === 'apps' && typeof initSortable === 'function') {
             initSortable();
           }
@@ -384,5 +518,4 @@ const LoadingScreen = (function() {
   return { init };
 })();
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', LoadingScreen.init);

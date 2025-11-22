@@ -250,6 +250,42 @@
       background: var(--mil-accent);
     }
 
+    /* Pinout Labels for Loading Screen */
+    .pinout-label {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(10px);
+    }
+    .pinout-label.visible {
+      transform: translateY(0);
+    }
+    .pinout-label.left {
+      text-align: left;
+      padding-left: 20px;
+      border-left: 1px solid rgba(249, 115, 22, 0.4);
+    }
+    .pinout-label.right {
+      text-align: right;
+      padding-right: 20px;
+      border-right: 1px solid rgba(249, 115, 22, 0.4);
+    }
+    .pinout-title {
+      font-size: 9px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    .pinout-value {
+      font-size: 11px;
+      color: #f97316;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
   </style>
   <!-- Three.js & Loading Screen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -260,6 +296,9 @@
   <div id="loading-screen" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col">
     <!-- Three.js Canvas Container -->
     <div id="terrain-container" class="absolute inset-0"></div>
+
+    <!-- Pinout Labels Container -->
+    <div id="pinout-labels" class="absolute inset-0 z-[5] pointer-events-none"></div>
 
     <!-- HUD Overlay -->
     <div class="relative z-10 flex flex-col h-full pointer-events-none">

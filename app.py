@@ -16,7 +16,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_sock import Sock
 
 from homelab.docker_utils import fetch_containers
-from homelab.system_stats import system_stats, human_bytes
+from homelab.system_stats import system_stats, system_info, human_bytes
 from homelab.icon_service import DEFAULT_ICON, icon_payload
 from homelab.app_store import apps_with_status, save_app_entry, delete_app, reorder_apps, apply_order
 from homelab.widgets import (
@@ -72,6 +72,18 @@ def api_stats():
         default_icon=DEFAULT_ICON,
     )
     return partial
+
+
+@app.route("/api/system-info")
+def api_system_info():
+    """JSON endpoint for system info (used by loading screen)."""
+    containers, _ = fetch_containers()
+    info = system_info()
+    # Add container counts
+    running = sum(1 for c in containers if c.get('status', '').startswith('Up'))
+    info['containers_total'] = len(containers)
+    info['containers_running'] = running
+    return jsonify(info)
 
 
 @app.route("/api/apps")
