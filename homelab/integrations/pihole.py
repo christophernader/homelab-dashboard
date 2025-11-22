@@ -67,6 +67,31 @@ def _try_pihole_v6(base_url: str, password: str) -> Optional[dict]:
         gravity_resp = session.get(f"{base_url}/api/info/gravity", headers=auth_headers, timeout=5)
         gravity_data = gravity_resp.json() if gravity_resp.status_code == 200 else {}
 
+        # Get diagnosis info (errors/warnings) from messages endpoint
+        messages_resp = session.get(f"{base_url}/api/info/messages", headers=auth_headers, timeout=5)
+        messages_data = messages_resp.json() if messages_resp.status_code == 200 else {}
+
+        # Count errors and warnings from messages
+        diagnosis_errors = 0
+        diagnosis_warnings = 0
+        diagnosis_items = []
+
+        # Message types that are errors vs warnings
+        error_types = ['CONNECTION_ERROR', 'RATE_LIMIT', 'DATABASE_ERROR', 'GRAVITY_ERROR', 'FATAL']
+        warning_types = ['DNSMASQ_WARN', 'WARNING', 'SUBNET', 'HOSTNAME']
+
+        for item in messages_data.get('messages', []):
+            msg_type = item.get('type', '').upper()
+            message = item.get('plain', '') or item.get('html', '')
+
+            if any(et in msg_type for et in error_types):
+                diagnosis_errors += 1
+                diagnosis_items.append({'type': 'error', 'message': message})
+            else:
+                # Treat unknown types as warnings
+                diagnosis_warnings += 1
+                diagnosis_items.append({'type': 'warning', 'message': message})
+
         # Logout to free session seat
         try:
             session.delete(f"{base_url}/api/auth", headers=auth_headers, timeout=2)
@@ -85,6 +110,9 @@ def _try_pihole_v6(base_url: str, password: str) -> Optional[dict]:
             'queries_forwarded': int(queries.get('forwarded', 0)),
             'status': 'enabled' if data.get('gravity', {}).get('domains_being_blocked', 0) > 0 else 'disabled',
             'gravity_last_updated': gravity_data.get('gravity', {}).get('last_update', {}).get('relative', {}).get('days', 'N/A'),
+            'diagnosis_errors': diagnosis_errors,
+            'diagnosis_warnings': diagnosis_warnings,
+            'diagnosis_items': diagnosis_items,
         }
     except Exception as e:
         return {'error': str(e), 'status': 'error'}

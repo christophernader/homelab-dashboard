@@ -62,6 +62,14 @@ DEFAULT_SETTINGS = {
         "weather_bar_enabled": True,
         "crypto_bar_enabled": True,
     },
+    "location": {
+        "city": "",
+        "latitude": "",
+        "longitude": "",
+        "timezone": "",
+        "use_auto": True,
+        "units": "imperial",  # imperial (F) or metric (C)
+    },
 }
 
 

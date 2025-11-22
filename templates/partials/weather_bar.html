@@ -1,8 +1,13 @@
 {% if weather %}
+{% set use_metric = units == 'metric' %}
 <div class="flex items-center gap-6 text-[10px] font-mono">
   <div class="flex items-center gap-2">
     <i class="fa-solid {{ weather.icon }} text-mil-accent"></i>
+    {% if use_metric %}
     <span class="text-mil-text font-semibold">{{ weather.temp_c }}&deg;C</span>
+    {% else %}
+    <span class="text-mil-text font-semibold">{{ weather.temp_f }}&deg;F</span>
+    {% endif %}
     <span class="text-mil-muted">{{ weather.condition }}</span>
   </div>
   <div class="flex items-center gap-4 text-mil-muted">

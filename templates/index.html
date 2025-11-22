@@ -719,14 +719,23 @@
       }
     });
 
-    // Geolocation for weather (both bar and widget)
-    if (navigator.geolocation) {
+    // Location settings from server
+    const locationSettings = {
+      useAuto: {{ (location.use_auto | default(true)) | tojson }},
+      city: {{ (location.city | default('')) | tojson }},
+      latitude: {{ (location.latitude | default('')) | tojson }},
+      longitude: {{ (location.longitude | default('')) | tojson }},
+      units: {{ (location.units | default('imperial')) | tojson }}
+    };
+
+    // Geolocation for weather (only if auto-detect is enabled)
+    if (locationSettings.useAuto && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
 
-          // Update weather bar
+          // Update weather bar with browser location
           const weatherBar = document.getElementById('weather-bar');
           if (weatherBar) {
             weatherBar.setAttribute('hx-get', `/api/widgets/weather-bar?lat=${lat}&lon=${lon}`);
@@ -742,8 +751,11 @@
             htmx.trigger(weatherContainer, 'load');
           }
         },
-        () => console.log('Geolocation denied')
+        () => console.log('Geolocation denied or unavailable')
       );
+    } else if (!locationSettings.useAuto) {
+      // Using manual location from settings - server will handle it
+      console.log('Using manual location settings');
     }
 
     document.addEventListener('DOMContentLoaded', initSortable);

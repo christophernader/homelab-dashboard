@@ -19,11 +19,12 @@ def widget_weather():
     lon = request.args.get("lon", type=float)
     city = request.args.get("city")
 
+    settings = load_settings()
+    location = settings.get('location', {})
+    units = location.get('units', 'imperial')
+
     # If no params provided, use saved location settings
     if lat is None and lon is None and city is None:
-        settings = load_settings()
-        location = settings.get('location', {})
-
         if not location.get('use_auto', True):
             # Use manual location settings
             city = location.get('city') or None
@@ -37,7 +38,7 @@ def widget_weather():
                     pass
 
     weather = get_weather(city=city or "auto", lat=lat, lon=lon)
-    return render_template("partials/widget_weather.html", weather=weather, lat=lat, lon=lon)
+    return render_template("partials/widget_weather.html", weather=weather, lat=lat, lon=lon, units=units)
 
 
 @widgets_bp.get("/api/widgets/news")
@@ -84,11 +85,12 @@ def widget_weather_bar():
     lon = request.args.get("lon", type=float)
     city = request.args.get("city")
 
+    settings = load_settings()
+    location = settings.get('location', {})
+    units = location.get('units', 'imperial')  # imperial (F) or metric (C)
+
     # If no params provided, use saved location settings
     if lat is None and lon is None and city is None:
-        settings = load_settings()
-        location = settings.get('location', {})
-
         if not location.get('use_auto', True):
             # Use manual location settings
             city = location.get('city') or None
@@ -102,7 +104,7 @@ def widget_weather_bar():
                     pass
 
     weather = get_weather(city=city or "auto", lat=lat, lon=lon)
-    return render_template("partials/weather_bar.html", weather=weather)
+    return render_template("partials/weather_bar.html", weather=weather, units=units)
 
 
 @widgets_bp.get("/api/widgets/crypto-bar")

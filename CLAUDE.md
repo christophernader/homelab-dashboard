@@ -9,7 +9,7 @@ A Flask-based homelab dashboard with a military/tactical aesthetic. Features rea
 - **Backend**: Python 3, Flask, Flask-Sock (WebSocket)
 - **Frontend**: Tailwind CSS (via CDN), HTMX, Three.js (loading screen)
 - **Terminal**: xterm.js with WebSocket backend
-- **Deployment**: Debian server at `chris@192.168.50.10`, dashboard on port 5050
+- **Deployment**: Docker container on Debian server at `chris@192.168.50.10`, port 5050
 
 ## Server Connection Info
 
@@ -19,29 +19,36 @@ User: chris
 Password: 951357
 Dashboard Port: 5050
 Dashboard Path: ~/homelab-dashboard
-Venv: ~/homelab-dashboard/venv
 ```
 
 ## Deployment Commands
 
 **IMPORTANT: The dashboard runs in a Docker container, not directly on the host!**
 
+### Quick Deploy (copy-paste ready)
 ```bash
-# Deploy files (run from local machine)
-rsync -avz --exclude '.git' --exclude '__pycache__' --exclude '.venv' --exclude 'venv' --exclude 'data' -e "sshpass -p '951357' ssh -o StrictHostKeyChecking=no" /Users/chris/homelab-dashboard/ chris@192.168.50.10:~/homelab-dashboard/
-
-# Rebuild and restart Docker container (REQUIRED after file changes)
-sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "cd ~/homelab-dashboard && docker compose down && docker compose up -d --build"
-
-# View container logs
-sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "docker logs homelab-dashboard"
+# One-liner: Deploy files and rebuild container
+rsync -avz --exclude '.git' --exclude '__pycache__' --exclude '.venv' --exclude 'venv' --exclude 'data' -e "sshpass -p '951357' ssh -o StrictHostKeyChecking=no" /Users/chris/homelab-dashboard/ chris@192.168.50.10:~/homelab-dashboard/ && sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "cd ~/homelab-dashboard && docker compose down && docker compose up -d --build"
 ```
 
-### Legacy (non-Docker) - DO NOT USE
+### Step-by-Step Deployment
+```bash
+# Step 1: Deploy files to server (run from local machine)
+rsync -avz --exclude '.git' --exclude '__pycache__' --exclude '.venv' --exclude 'venv' --exclude 'data' -e "sshpass -p '951357' ssh -o StrictHostKeyChecking=no" /Users/chris/homelab-dashboard/ chris@192.168.50.10:~/homelab-dashboard/
+
+# Step 2: Rebuild and restart Docker container (REQUIRED after file changes)
+sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "cd ~/homelab-dashboard && docker compose down && docker compose up -d --build"
+
+# View container logs (for debugging)
+sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "docker logs homelab-dashboard"
+
+# View live logs
+sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "docker logs -f homelab-dashboard"
+```
+
+### DO NOT USE (Legacy non-Docker commands)
 ```bash
 # These commands won't work because the dashboard runs in Docker!
-# cd ~/homelab-dashboard
-# source venv/bin/activate
 # pkill -f 'python3 app.py'
 # nohup python3 app.py > /tmp/dashboard.log 2>&1 &
 ```
@@ -53,6 +60,7 @@ homelab-dashboard/
 ├── app.py                    # Main Flask app, routes, WebSocket terminal
 ├── homelab/
 │   ├── settings.py           # Settings management, themes, defaults
+│   ├── widgets.py            # External API widgets (weather, news, crypto)
 │   ├── docker_utils.py       # Docker container fetching
 │   ├── system_stats.py       # System stats (CPU, RAM, etc)
 │   ├── app_store.py          # Service/app management
@@ -75,42 +83,43 @@ homelab-dashboard/
 │       ├── stats.html
 │       ├── widget_pihole.html
 │       ├── widget_speedtest.html
+│       ├── widget_weather.html
+│       ├── weather_bar.html
 │       └── ... other widgets
 ├── static/
 │   ├── css/animations.css
 │   └── js/loading.js         # Three.js loading screen
 └── data/
-    ├── settings.json         # Persisted settings
-    └── apps.json             # Saved services/apps
+    ├── settings.json         # Persisted settings (Docker volume)
+    └── apps.json             # Saved services/apps (Docker volume)
 ```
 
 ## Current Feature State
 
 ### Completed Features
-1. **Theme System** (JUST IMPLEMENTED)
+
+1. **Theme System**
    - 9 themes: military, cyberpunk, matrix, nord, dracula, solarized, monokai, ocean, light
    - Themes defined in `homelab/settings.py` as `THEMES` dict
-   - CSS variables used throughout: `--mil-black`, `--mil-dark`, `--mil-card`, `--mil-border`, `--mil-text`, `--mil-muted`, `--mil-accent`, `--mil-success`, `--mil-error`
+   - CSS variables: `--mil-black`, `--mil-dark`, `--mil-card`, `--mil-border`, `--mil-text`, `--mil-muted`, `--mil-accent`, `--mil-success`, `--mil-error`
    - Theme selection UI in Settings > Appearance tab
-   - Theme colors passed from `app.py` to `index.html` via `theme_colors` template var
-   - **Note**: Old light-mode toggle removed from header, themes now managed via Settings
 
-2. **Location Settings for Weather** (JUST IMPLEMENTED)
-   - Location settings in `DEFAULT_SETTINGS['location']`
-   - UI in Settings > Dashboard tab
-   - Options: auto-detect (IP-based) or manual (city, lat/lon)
+2. **Weather Widget (Open-Meteo API)**
+   - Uses Open-Meteo API (free, no API key, reliable)
+   - Supports manual location (city, lat/lon) or auto-detect
+   - Temperature units: imperial (F) or metric (C)
+   - Location settings in Settings > Dashboard tab
    - API endpoint: `POST /api/settings/location`
 
 3. **Pi-hole Integration**
    - Supports both v5 (api.php) and v6+ (REST API with session auth)
    - Shows: blocked today, block rate, total queries, clients, blocklist size
-   - Diagnosis section showing Pi-hole errors/warnings
+   - **Diagnosis tracker**: Shows error/warning count from `/api/info/messages`
    - Session logout on completion to avoid `api_seats_exceeded` errors
 
 4. **Speedtest Integration**
    - Supports Speedtest Tracker (LinuxServer.io image on port 8090)
    - Handles "No results found" state with link to run first test
-   - Embedded LibreSpeed widget (commented out, was for browser-based tests)
 
 5. **Other Integrations**
    - Uptime Kuma (status pages)
@@ -137,7 +146,9 @@ DEFAULT_SETTINGS = {
         "city": "",
         "latitude": "",
         "longitude": "",
+        "timezone": "",
         "use_auto": True,
+        "units": "imperial",  # imperial (F) or metric (C)
     },
     "appearance": {
         "theme": "military",
@@ -153,27 +164,6 @@ DEFAULT_SETTINGS = {
 }
 ```
 
-## Theme Colors Structure
-
-Each theme in `THEMES` dict has:
-```python
-"theme_name": {
-    "name": "Display Name",
-    "description": "Short description",
-    "colors": {
-        "black": "#hex",    # Background
-        "dark": "#hex",     # Slightly lighter bg
-        "card": "#hex",     # Card backgrounds
-        "border": "#hex",   # Borders
-        "text": "#hex",     # Main text
-        "muted": "#hex",    # Secondary text
-        "accent": "#hex",   # Primary accent (buttons, highlights)
-        "success": "#hex",  # Success states (green)
-        "error": "#hex",    # Error states (red)
-    }
-}
-```
-
 ## API Endpoints
 
 ### Settings
@@ -181,57 +171,51 @@ Each theme in `THEMES` dict has:
 - `GET /api/themes` - List all themes
 - `GET /api/theme/<name>` - Get theme colors
 - `POST /api/settings/theme` - Set active theme (form: theme=name)
-- `POST /api/settings/location` - Save location (form: city, latitude, longitude, use_auto)
+- `POST /api/settings/location` - Save location settings
+- `GET /api/settings/location` - Get location settings
 - `POST /api/settings/widget/<name>/toggle` - Toggle widget
 - `POST /api/settings/integration/<name>/toggle` - Toggle integration
 - `POST /api/settings/integration/<name>` - Save integration config
 - `POST /api/settings/integration/<name>/test` - Test integration connection
-- `POST /api/settings/<section>/<key>/toggle` - Toggle any boolean setting
 
 ### Widgets (HTMX partials)
-- `GET /api/widgets/pihole`
-- `GET /api/widgets/speedtest`
-- `GET /api/widgets/uptime-kuma`
-- `GET /api/widgets/weather-bar?lat=&lon=`
-- `GET /api/widgets/headlines`
-- `GET /api/widgets/crypto-bar`
-- `GET /api/widgets/news-detailed`
-- `GET /api/widgets/reddit-detailed?sub=`
-- `GET /api/widgets/threats-full`
+- `GET /api/widgets/pihole` - Pi-hole stats + diagnosis
+- `GET /api/widgets/speedtest` - Speedtest results
+- `GET /api/widgets/uptime-kuma` - Uptime Kuma status
+- `GET /api/widgets/weather?lat=&lon=` - Full weather widget
+- `GET /api/widgets/weather-bar?lat=&lon=` - Compact weather bar
+- `GET /api/widgets/crypto-bar` - Crypto prices ticker
+- `GET /api/widgets/headlines` - News headlines
+- `GET /api/widgets/news-detailed` - Hacker News
+- `GET /api/widgets/reddit-detailed?sub=` - Reddit posts
+- `GET /api/widgets/earthquakes` - USGS earthquake data
+- `GET /api/widgets/threats-full` - Threat status
 
-## Known Issues / TODOs
+## Integration Services (on homelab server)
 
-1. **Weather location** - The weather widget needs to use location from settings instead of geolocation. Currently still uses browser geolocation.
-
-2. **Theme persistence across reloads** - Theme is loaded from settings.json on each request, so it persists. But CSS variables are set once on page load.
-
-3. **Integration services**:
-   - Pi-hole: Password is `E1t3u5o7` on 192.168.50.10:8080
-   - Speedtest Tracker: On port 8090, may need first test run
-   - Uptime Kuma: On port 3001, requires public status page
-
-## Recent Changes (This Session)
-
-1. Added theme system with 9 themes to `settings.py`
-2. Updated `index.html` to use CSS variables for all colors
-3. Added theme selection UI to Settings > Appearance tab
-4. Added location settings UI to Settings > Dashboard tab
-5. Removed old light-mode toggle from header (themes now in Settings)
-6. Updated loading screen to use theme colors
-7. Updated grid background to use theme accent color
-
-## Files Modified This Session
-
-- `homelab/settings.py` - Added THEMES dict, get_themes(), get_theme_colors(), location in DEFAULT_SETTINGS
-- `homelab/routes/settings_routes.py` - Added theme and location API routes
-- `templates/index.html` - Theme CSS variables, removed light-mode, updated loading screen
-- `templates/settings.html` - Theme selection grid, location settings form
-- `app.py` - Import get_theme_colors, pass theme_colors and theme_name to index template
+| Service | Port | Notes |
+|---------|------|-------|
+| Pi-hole | 8080 | Password: `E1t3u5o7`, v6 API |
+| Speedtest Tracker | 8090 | May need first test run |
+| Uptime Kuma | 3001 | Requires public status page |
 
 ## Starting the Dashboard Locally
 
 ```bash
 cd /Users/chris/homelab-dashboard
 python3 app.py
-# Runs on port 5050
+# Runs on http://localhost:5050
 ```
+
+## Known Issues / TODOs
+
+1. **Gravity date** - Pi-hole gravity last updated shows "Unknown" (API response format changed)
+2. **Theme persistence** - Theme loads from settings.json on each request, CSS variables set on page load
+
+## Recent Changes
+
+- Fixed weather using Open-Meteo API (wttr.in was timing out from Docker)
+- Added temperature units support (F/C) based on location settings
+- Added Pi-hole diagnosis tracker showing errors/warnings from `/api/info/messages`
+- Fixed integrations not displaying on dashboard (HTMX sections were missing)
+- Fixed Pi-hole v6 authentication (requires `X-FTL-SID` header)

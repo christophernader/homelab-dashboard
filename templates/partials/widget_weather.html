@@ -1,4 +1,5 @@
 <div id="widget-weather" class="h-80 p-5 bg-mil-card shiny-border" hx-get="/api/widgets/weather{% if lat and lon %}?lat={{ lat }}&lon={{ lon }}{% endif %}" hx-trigger="every 600s" hx-swap="outerHTML">
+  {% set use_metric = units == 'metric' %}
   {% if weather %}
     <div class="flex items-start justify-between">
       <div>
@@ -8,7 +9,11 @@
       <i class="fa-solid {{ weather.icon }} text-2xl text-mil-accent"></i>
     </div>
     <div class="mt-3">
+      {% if use_metric %}
       <span class="text-4xl font-mono font-bold text-mil-text">{{ weather.temp_c }}<span class="text-xl text-mil-muted">&deg;C</span></span>
+      {% else %}
+      <span class="text-4xl font-mono font-bold text-mil-text">{{ weather.temp_f }}<span class="text-xl text-mil-muted">&deg;F</span></span>
+      {% endif %}
     </div>
     <p class="text-xs font-mono text-mil-muted mt-1 uppercase">{{ weather.condition }}</p>
     <div class="mt-3 flex gap-4 text-[10px] font-mono text-mil-muted uppercase">

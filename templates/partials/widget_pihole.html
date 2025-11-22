@@ -35,9 +35,53 @@
   <div class="mt-4 pt-4 border-t border-mil-border">
     <div class="flex justify-between text-[9px] font-mono text-mil-muted">
       <span>Domains on blocklist: {{ "{:,.0f}".format(pihole.domains_blocked) }}</span>
-      <span>Gravity: {{ pihole.gravity_last_updated }}d ago</span>
+      <span>Gravity: {% if pihole.gravity_last_updated != 'N/A' %}{{ pihole.gravity_last_updated }}d ago{% else %}Unknown{% endif %}</span>
     </div>
   </div>
+
+  {# Diagnosis/Issues Section #}
+  {% set errors = pihole.diagnosis_errors | default(0) %}
+  {% set warnings = pihole.diagnosis_warnings | default(0) %}
+  {% set total_issues = errors + warnings %}
+  {% if total_issues > 0 %}
+  <div class="mt-4 pt-4 border-t border-mil-border">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[9px] font-mono uppercase tracking-wider text-mil-muted">Diagnosis</span>
+      <div class="flex items-center gap-2">
+        {% if errors > 0 %}
+        <span class="text-[9px] font-mono px-2 py-0.5 bg-mil-error/20 text-mil-error">
+          <i class="fa-solid fa-circle-xmark mr-1"></i>{{ errors }} error{{ 's' if errors != 1 else '' }}
+        </span>
+        {% endif %}
+        {% if warnings > 0 %}
+        <span class="text-[9px] font-mono px-2 py-0.5 bg-yellow-500/20 text-yellow-500">
+          <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ warnings }} warning{{ 's' if warnings != 1 else '' }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% if pihole.diagnosis_items %}
+    <div class="space-y-1 max-h-24 overflow-y-auto">
+      {% for item in pihole.diagnosis_items[:5] %}
+      <div class="text-[8px] font-mono {% if item.type == 'error' %}text-mil-error{% else %}text-yellow-500{% endif %} truncate" title="{{ item.message }}">
+        <i class="fa-solid {% if item.type == 'error' %}fa-circle-xmark{% else %}fa-triangle-exclamation{% endif %} mr-1"></i>
+        {{ item.message | truncate(60) }}
+      </div>
+      {% endfor %}
+      {% if pihole.diagnosis_items | length > 5 %}
+      <div class="text-[8px] font-mono text-mil-muted">+ {{ pihole.diagnosis_items | length - 5 }} more issues...</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="mt-4 pt-4 border-t border-mil-border">
+    <div class="flex items-center gap-2 text-[9px] font-mono text-mil-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>No issues detected</span>
+    </div>
+  </div>
+  {% endif %}
   {% endif %}
 </div>
 {% endif %}

@@ -43,6 +43,7 @@ def index():
     apps = apps_with_status()
     settings = load_settings()
     integrations = settings.get('integrations', {})
+    location = settings.get('location', {})
     return render_template(
         "index.html",
         containers=containers,
@@ -53,6 +54,7 @@ def index():
         apps=apps,
         default_icon=DEFAULT_ICON,
         integrations=integrations,
+        location=location,
     )
 
 
@@ -117,8 +119,11 @@ def widget_weather():
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
     city = request.args.get("city", "auto")
+    settings = load_settings()
+    location = settings.get('location', {})
+    units = location.get('units', 'imperial')
     weather = get_weather(city=city, lat=lat, lon=lon)
-    return render_template("partials/widget_weather.html", weather=weather, lat=lat, lon=lon)
+    return render_template("partials/widget_weather.html", weather=weather, lat=lat, lon=lon, units=units)
 
 
 @app.get("/api/widgets/news")
@@ -273,6 +278,33 @@ def toggle_setting(section: str, key: str):
     current = get_setting(f'{section}.{key}', True)
     set_setting(f'{section}.{key}', not current)
     return "OK", 200
+
+
+@app.post("/api/settings/location")
+def save_location():
+    """Save location settings."""
+    settings = load_settings()
+    if 'location' not in settings:
+        settings['location'] = {}
+
+    # Update location settings from form
+    settings['location']['city'] = request.form.get('city', '').strip()
+    settings['location']['latitude'] = request.form.get('latitude', '').strip()
+    settings['location']['longitude'] = request.form.get('longitude', '').strip()
+    settings['location']['timezone'] = request.form.get('timezone', '').strip()
+    settings['location']['units'] = request.form.get('units', 'imperial')
+    settings['location']['use_auto'] = request.form.get('use_auto', 'false').lower() == 'true'
+
+    save_settings(settings)
+    return "OK", 200
+
+
+@app.get("/api/settings/location")
+def get_location():
+    """Get location settings."""
+    settings = load_settings()
+    location = settings.get('location', {})
+    return jsonify(location)
 
 
 # ========== INTEGRATION WIDGET ROUTES ==========
