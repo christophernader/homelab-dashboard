@@ -1,0 +1,50 @@
+{% if uptime %}
+<div class="shiny-border p-4">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-heart-pulse text-mil-accent"></i>
+      <span class="text-[10px] font-mono uppercase tracking-wider text-mil-muted">Uptime Kuma</span>
+    </div>
+    <span class="text-[9px] font-mono uppercase px-2 py-0.5 {% if uptime.status == 'connected' %}bg-mil-success/20 text-mil-success{% else %}bg-mil-error/20 text-mil-error{% endif %}">
+      {{ uptime.status | upper }}
+    </span>
+  </div>
+
+  {% if uptime.error %}
+  <p class="text-xs text-mil-error">{{ uptime.error }}</p>
+  {% else %}
+  <div class="grid grid-cols-4 gap-2 mb-4">
+    <div class="text-center">
+      <p class="text-xl font-mono text-mil-success">{{ uptime.up }}</p>
+      <p class="text-[8px] font-mono uppercase text-mil-muted">Up</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xl font-mono text-mil-error">{{ uptime.down }}</p>
+      <p class="text-[8px] font-mono uppercase text-mil-muted">Down</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xl font-mono text-mil-muted">{{ uptime.paused }}</p>
+      <p class="text-[8px] font-mono uppercase text-mil-muted">Paused</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xl font-mono {% if uptime.health_percent >= 90 %}text-mil-success{% elif uptime.health_percent >= 70 %}text-mil-accent{% else %}text-mil-error{% endif %}">{{ uptime.health_percent }}%</p>
+      <p class="text-[8px] font-mono uppercase text-mil-muted">Health</p>
+    </div>
+  </div>
+
+  {% if uptime.monitors %}
+  <div class="space-y-1 max-h-32 overflow-y-auto">
+    {% for monitor in uptime.monitors[:6] %}
+    <div class="flex items-center justify-between text-[10px] font-mono">
+      <span class="text-mil-text truncate mr-2">{{ monitor.name }}</span>
+      <span class="flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full {% if monitor.status == 'up' %}bg-mil-success{% elif monitor.status == 'down' %}bg-mil-error{% else %}bg-mil-muted{% endif %}"></span>
+        <span class="text-mil-muted">{{ "%.1f"|format(monitor.uptime_24h) }}%</span>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endif %}

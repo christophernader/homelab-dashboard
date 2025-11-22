@@ -41,6 +41,8 @@ def index():
     containers, docker_error = fetch_containers()
     stats = system_stats()
     apps = apps_with_status()
+    settings = load_settings()
+    integrations = settings.get('integrations', {})
     return render_template(
         "index.html",
         containers=containers,
@@ -50,6 +52,7 @@ def index():
         updated_at=datetime.now(timezone.utc),
         apps=apps,
         default_icon=DEFAULT_ICON,
+        integrations=integrations,
     )
 
 
@@ -286,6 +289,13 @@ def widget_speedtest():
     """Get Speedtest widget."""
     stats = get_speedtest_results()
     return render_template("partials/widget_speedtest.html", speedtest=stats)
+
+
+@app.get("/api/widgets/uptime-kuma")
+def widget_uptime_kuma():
+    """Get Uptime Kuma widget."""
+    stats = get_uptime_kuma_stats()
+    return render_template("partials/widget_uptime_kuma.html", uptime=stats)
 
 
 @sock.route('/terminal')
