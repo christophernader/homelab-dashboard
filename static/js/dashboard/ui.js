@@ -121,24 +121,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Generic HTMX Notification Handler
     document.body.addEventListener('htmx:afterOnLoad', (e) => {
-        console.log('HTMX afterOnLoad:', e.detail);
-        if (e.detail.xhr.status >= 200 && e.detail.xhr.status < 300) {
-            try {
-                const resp = JSON.parse(e.detail.xhr.responseText);
-                console.log('Parsed response:', resp);
-                if (resp.message) {
-                    showToast(resp.message, resp.status === 'error' ? 'error' : 'success');
+        const xhr = e.detail.xhr;
+        const contentType = xhr.getResponseHeader('Content-Type');
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const resp = JSON.parse(xhr.responseText);
+                    if (resp.message) {
+                        showToast(resp.message, resp.status === 'error' ? 'error' : 'success');
+                    }
+                } catch (err) {
+                    // Silent fail for non-JSON or malformed JSON
                 }
-            } catch (err) {
-                console.error('JSON parse error:', err);
             }
-        } else if (e.detail.xhr.status >= 400) {
-            try {
-                const resp = JSON.parse(e.detail.xhr.responseText);
-                if (resp.message) {
-                    showToast(resp.message, 'error');
+        } else if (xhr.status >= 400) {
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const resp = JSON.parse(xhr.responseText);
+                    if (resp.message) {
+                        showToast(resp.message, 'error');
+                    }
+                } catch (err) {
+                    showToast('An error occurred', 'error');
                 }
-            } catch (err) {
+            } else {
                 showToast('An error occurred', 'error');
             }
         }
@@ -157,25 +164,170 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
-        toast.className = `fixed bottom-4 right-4 px-4 py-2 border text-xs font-mono uppercase tracking-wider z-50 transition-all duration-300 transform translate-y-10 opacity-0 ${type === 'error'
-            ? 'bg-mil-card border-mil-error text-mil-error'
-            : 'bg-mil-card border-mil-success text-mil-success'
+        toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded shadow-lg text-xs font-mono uppercase tracking-wider z-50 transition-all duration-300 transform translate-y-10 opacity-0 ${type === 'error' ? 'bg-mil-error text-mil-black' : 'bg-mil-success text-mil-black'
             }`;
-        toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-check'} mr-2"></i> ${message}`;
-
+        toast.textContent = message;
         document.body.appendChild(toast);
 
-        // Animate in
         requestAnimationFrame(() => {
             toast.classList.remove('translate-y-10', 'opacity-0');
         });
 
-        // Remove after 3s
         setTimeout(() => {
             toast.classList.add('translate-y-10', 'opacity-0');
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
+
+    // --- Auto-Detect & Edit App Logic ---
+
+    window.openEditApp = async function (name) {
+        try {
+            const resp = await fetch(`/api/apps/${encodeURIComponent(name)}`);
+            if (!resp.ok) throw new Error('Failed to fetch app');
+            const app = await resp.json();
+
+            // Populate form
+            document.getElementById('original-name').value = app.name;
+            document.getElementById('app-name').value = app.name;
+            document.getElementById('app-url').value = app.url;
+            document.getElementById('icon-url').value = app.icon || '';
+            document.getElementById('icon-preview').src = app.icon || '{{ default_icon }}';
+
+            // Update UI for Edit Mode
+            document.getElementById('edit-panel-title').textContent = 'EDIT SERVICE';
+            document.getElementById('submit-text').textContent = 'SAVE CHANGES';
+
+            // Update HTMX attributes manually for Edit
+            const form = document.getElementById('add-app-form');
+            form.setAttribute('hx-put', `/api/apps/${encodeURIComponent(name)}`);
+            htmx.process(form); // Re-process to pick up new attribute
+
+            // Handle form submission manually to support PUT
+            form.onsubmit = function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+
+                fetch(`/api/apps/${encodeURIComponent(name)}`, {
+                    method: 'PUT',
+                    body: formData
+                }).then(async r => {
+                    if (r.ok) {
+                        toggleEditMode();
+                        htmx.trigger('#apps-container', 'load'); // Refresh grid
+                        showToast('App updated successfully');
+                    } else {
+                        showToast('Update failed', 'error');
+                    }
+                });
+            };
+
+            // Hide Auto-Detect section in Edit Mode
+            document.getElementById('auto-detect-section').classList.add('hidden');
+
+            toggleEditMode();
+        } catch (err) {
+            showToast('Error loading app details', 'error');
+        }
+    };
+
+    // Reset form when closing or opening fresh
+    const originalToggleEditMode = window.toggleEditMode;
+    window.toggleEditMode = function () {
+        const panel = document.getElementById('edit-panel');
+        const isClosed = panel.classList.contains('translate-x-full');
+
+        if (isClosed) {
+            // Reset to "Add Mode" defaults
+            document.getElementById('add-app-form').reset();
+            document.getElementById('original-name').value = '';
+            document.getElementById('edit-panel-title').textContent = 'ADD SERVICE';
+            document.getElementById('submit-text').textContent = 'ADD TO DASHBOARD';
+            document.getElementById('auto-detect-section').classList.remove('hidden');
+            document.getElementById('auto-detect-preview').classList.add('hidden');
+            document.getElementById('detected-apps-list').innerHTML = '';
+
+            // Reset form submission handler
+            const form = document.getElementById('add-app-form');
+            form.onsubmit = null; // Remove custom PUT handler
+            form.setAttribute('hx-post', '/api/apps/add');
+            htmx.process(form);
+        }
+
+        originalToggleEditMode();
+    };
+
+    window.autoDetectApps = async function () {
+        const btn = document.querySelector('#auto-detect-section button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> SCANNING...';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch('/api/apps/autodiscover');
+            const apps = await resp.json();
+
+            const list = document.getElementById('detected-apps-list');
+            list.innerHTML = '';
+
+            if (apps.length === 0) {
+                list.innerHTML = '<p class="text-xs text-mil-muted font-mono">No new services found.</p>';
+            } else {
+                apps.forEach(app => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-3 p-2 bg-mil-black border border-mil-border';
+                    div.innerHTML = `
+                        <input type="checkbox" class="accent-mil-accent" checked value='${JSON.stringify(app)}'>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold text-mil-text truncate">${app.name}</span>
+                                <span class="text-[9px] font-mono text-mil-muted uppercase bg-mil-dark px-1 border border-mil-border">DETECTED</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-mil-muted truncate">${app.url}</div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            document.getElementById('auto-detect-preview').classList.remove('hidden');
+        } catch (err) {
+            showToast('Scan failed', 'error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    };
+
+    window.importSelectedApps = async function () {
+        const selected = [];
+        document.querySelectorAll('#detected-apps-list input:checked').forEach(cb => {
+            selected.push(JSON.parse(cb.value));
+        });
+
+        if (selected.length === 0) {
+            showToast('No apps selected', 'error');
+            return;
+        }
+
+        try {
+            const resp = await fetch('/api/apps/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(selected)
+            });
+
+            if (resp.ok) {
+                showToast(`Imported ${selected.length} apps`);
+                toggleEditMode();
+                htmx.trigger('#apps-container', 'load');
+            } else {
+                showToast('Import failed', 'error');
+            }
+        } catch (err) {
+            showToast('Error importing apps', 'error');
+        }
+    };
 
     // Geolocation
     if (window.locationSettings && window.locationSettings.useAuto && navigator.geolocation) {
