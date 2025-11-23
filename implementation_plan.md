@@ -62,23 +62,32 @@ Implement a "Smart Auto-Detect" feature for apps that scans local Docker contain
 *   Add `openEditApp(name)`: Populate form.
 *   Add `autoDetectApps()`: Handle the fetch, preview rendering, and import flow.
 
-### Audiobookshelf UI Rework
+### Loading Screen Rework (SentriX Inspired)
 
-#### [MODIFY] [homelab/integrations/audiobookshelf.py](file:///Users/chris/homelab-dashboard/homelab/integrations/audiobookshelf.py)
-*   Increase `limit` in `items_resp` from 5 to 10 or 15 to populate the horizontal scroll.
+#### [MODIFY] [templates/partials/loading.html](file:///Users/chris/homelab-dashboard/templates/partials/loading.html)
+*   **Layout**: Switch to a HUD-style overlay.
+    *   **Top Left**: Title "HOMELAB DASHBOARD // INITIALIZING".
+    *   **Center**: 3D Canvas (Full screen).
+    *   **Bottom Left**: "SYSTEM METRICS" panel (simulated stats: CPU, RAM, Network).
+    *   **Bottom Right**: "STATUS" panel (Circular gauge or progress bar).
+    *   **Styling**: Use `border-mil-border`, `bg-mil-card/80`, `backdrop-blur`.
 
-#### [MODIFY] [templates/partials/widget_audiobookshelf.html](file:///Users/chris/homelab-dashboard/templates/partials/widget_audiobookshelf.html)
-*   **Layout**: Change from vertical list to horizontal scroll (`flex-row`, `overflow-x-auto`).
-*   **Card Style**:
-    *   Show larger covers (e.g., `w-24 h-36`).
-    *   Overlay title/author on hover or show below.
-    *   Use `snap-x` for smooth scrolling.
-    *   Hide scrollbar but allow scrolling.
+#### [MODIFY] [static/js/loading/viz_terrain.js](file:///Users/chris/homelab-dashboard/static/js/loading/viz_terrain.js)
+*   **Scene**:
+    *   Replace terrain with a "Hero" object (e.g., a rotating wireframe sphere or complex geometry representing the "Core").
+    *   Add a dynamic grid floor (moving lines).
+    *   Add "floating" data points or lines connecting to the core.
+*   **Camera**: Cinematic rotation around the center object.
+
+#### [MODIFY] [static/css/animations.css](file:///Users/chris/homelab-dashboard/static/css/animations.css)
+*   Add "scanline" overlay effect.
+*   Add "glitch" text effect for the header.
 
 ## Verification Plan
 ### Manual Verification
-1.  **Audiobookshelf Widget**:
-    *   Verify books appear in a horizontal row.
-    *   Verify scrolling works (drag or trackpad).
-    *   Verify covers load correctly.
-    *   Verify hover effects (if added).
+1.  **Loading Screen**:
+    *   Refresh page.
+    *   Verify new HUD layout appears.
+    *   Verify 3D scene is updated (Hero object).
+    *   Verify animations (scanlines, text glitch).
+    *   Verify transition to dashboard is smooth.

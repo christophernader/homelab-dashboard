@@ -585,8 +585,8 @@ function initAudiobookMarquee() {
     container.dataset.marqueeInitialized = 'true';
 
     let scrollPos = 0;
-    let speed = 0.5; // Base speed (pixels per frame)
-    let currentSpeed = 0.5;
+    let speed = 0.8; // Increased base speed
+    let currentSpeed = 0.8;
     let isHovered = false;
     let lastTime = performance.now();
     let animationId;
@@ -604,7 +604,6 @@ function initAudiobookMarquee() {
         const targetSpeed = isHovered ? 0 : speed;
 
         // Smoothly interpolate current speed to target speed
-        // Factor 0.05 gives a nice "slowly stop" feel
         currentSpeed += (targetSpeed - currentSpeed) * 0.05;
 
         // Only scroll if speed is significant
@@ -618,6 +617,7 @@ function initAudiobookMarquee() {
             // Note: scrollWidth includes the overflowed content.
             const halfWidth = container.scrollWidth / 2;
 
+            // Reset when we've scrolled past half the total width
             if (scrollPos >= halfWidth) {
                 scrollPos -= halfWidth;
             }
@@ -631,12 +631,25 @@ function initAudiobookMarquee() {
     container.addEventListener('mouseenter', () => isHovered = true);
     container.addEventListener('mouseleave', () => isHovered = false);
 
+    // Start animation
     animationId = requestAnimationFrame(animate);
 }
 
-// Re-init marquee after HTMX swaps (e.g. widget refresh)
-document.body.addEventListener('htmx:afterSwap', (e) => {
-    if (e.detail.target && e.detail.target.querySelector('#audiobook-scroll-container')) {
+// Robust initialization
+['DOMContentLoaded', 'htmx:afterSwap', 'htmx:afterSettle'].forEach(event => {
+    document.body.addEventListener(event, (e) => {
+        // Check if the target contains the container or is the container
+        const target = e.detail?.target || document;
+        if (target.querySelector && target.querySelector('#audiobook-scroll-container')) {
+            initAudiobookMarquee();
+        }
+    });
+});
+
+// Fallback check for initial load
+setInterval(() => {
+    const container = document.getElementById('audiobook-scroll-container');
+    if (container && !container.dataset.marqueeInitialized) {
         initAudiobookMarquee();
     }
-});
+}, 1000);
