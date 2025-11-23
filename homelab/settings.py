@@ -49,6 +49,11 @@ DEFAULT_SETTINGS = {
             "url": "",
             "slug": "default",
         },
+        "audiobookshelf": {
+            "enabled": False,
+            "url": "",
+            "api_key": "",
+        },
     },
     "appearance": {
         "theme": "dark",

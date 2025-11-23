@@ -5,7 +5,7 @@ from typing import Optional
 from ..settings import get_integration_config
 
 
-def get_speedtest_results() -> Optional[dict]:
+def get_speedtest_results(config_override=None) -> Optional[dict]:
     """
     Fetch latest speedtest results from Speedtest Tracker.
 
@@ -13,7 +13,10 @@ def get_speedtest_results() -> Optional[dict]:
     - speedtest_url: Base URL of Speedtest Tracker (e.g., http://192.168.1.10:8080)
     - speedtest_api_key: API key (optional, depends on your setup)
     """
-    config = get_integration_config('speedtest')
+    if config_override:
+        config = config_override
+    else:
+        config = get_integration_config('speedtest')
     if not config or not config.get('enabled'):
         return None
 

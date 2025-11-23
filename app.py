@@ -30,6 +30,10 @@ def create_app():
     app.register_blueprint(settings_bp)
     app.register_blueprint(widgets_bp)
 
+    # Register filters
+    from homelab.filters import timestamp_to_time
+    app.add_template_filter(timestamp_to_time)
+
     return app
 
 

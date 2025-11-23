@@ -119,6 +119,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Generic HTMX Notification Handler
+    document.body.addEventListener('htmx:afterOnLoad', (e) => {
+        console.log('HTMX afterOnLoad:', e.detail);
+        if (e.detail.xhr.status >= 200 && e.detail.xhr.status < 300) {
+            try {
+                const resp = JSON.parse(e.detail.xhr.responseText);
+                console.log('Parsed response:', resp);
+                if (resp.message) {
+                    showToast(resp.message, resp.status === 'error' ? 'error' : 'success');
+                }
+            } catch (err) {
+                console.error('JSON parse error:', err);
+            }
+        } else if (e.detail.xhr.status >= 400) {
+            try {
+                const resp = JSON.parse(e.detail.xhr.responseText);
+                if (resp.message) {
+                    showToast(resp.message, 'error');
+                }
+            } catch (err) {
+                showToast('An error occurred', 'error');
+            }
+        }
+    });
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-4 py-2 border text-xs font-mono uppercase tracking-wider z-50 transition-all duration-300 transform translate-y-10 opacity-0 ${type === 'error'
+            ? 'bg-mil-card border-mil-error text-mil-error'
+            : 'bg-mil-card border-mil-success text-mil-success'
+            }`;
+        toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-check'} mr-2"></i> ${message}`;
+
+        document.body.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-10', 'opacity-0');
+        });
+
+        // Remove after 3s
+        setTimeout(() => {
+            toast.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     // Geolocation
     if (window.locationSettings && window.locationSettings.useAuto && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(

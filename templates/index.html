@@ -95,7 +95,8 @@
     <!-- Integrations Section -->
     {% set has_integrations = (integrations.pihole.enabled if integrations and integrations.pihole else false) or
     (integrations.speedtest.enabled if integrations and integrations.speedtest else false) or
-    (integrations.uptime_kuma.enabled if integrations and integrations.uptime_kuma else false) %}
+    (integrations.uptime_kuma.enabled if integrations and integrations.uptime_kuma else false) or
+    (integrations.audiobookshelf.enabled if integrations and integrations.audiobookshelf else false) %}
     {% if has_integrations %}
     <section class="mb-10" data-animate="slide-up">
       <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">INTEGRATIONS</h2>
@@ -112,6 +113,12 @@
         {% endif %}
         {% if integrations and integrations.uptime_kuma and integrations.uptime_kuma.enabled %}
         <div hx-get="/api/widgets/uptime-kuma" hx-trigger="load, every 30s" hx-swap="innerHTML" data-animate="scale">
+          <div class="h-48 bg-mil-card border border-mil-border animate-pulse"></div>
+        </div>
+        {% endif %}
+        {% if integrations and integrations.audiobookshelf and integrations.audiobookshelf.enabled %}
+        <div hx-get="/api/widgets/audiobookshelf" hx-trigger="load, every 300s" hx-swap="innerHTML"
+          data-animate="scale">
           <div class="h-48 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
         {% endif %}
@@ -169,7 +176,7 @@
     units: { { (location.units | default ('imperial')) | tojson } }
     };
   </script>
-  <script src="{{ url_for('static', filename='js/dashboard/ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard/ui.js') }}?v=2"></script>
   <script src="{{ url_for('static', filename='js/dashboard/terminal.js') }}"></script>
 </body>
 

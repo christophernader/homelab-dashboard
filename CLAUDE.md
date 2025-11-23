@@ -159,6 +159,7 @@ homelab-dashboard/
    - Uptime Kuma (status pages)
    - Portainer (Docker management)
    - Proxmox (virtualization)
+   - Audiobookshelf (recent audiobooks and stats)
 
 ### Settings Structure
 

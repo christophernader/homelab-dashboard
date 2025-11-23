@@ -1,61 +1,48 @@
-# Refactoring Implementation Plan
+# Implementation Plan - Audiobookshelf Integration
 
-This plan outlines the steps to complete the refactoring of the Homelab Dashboard, as identified in the `refactoring_guide.md`.
+## Goal
+Integrate Audiobookshelf (self-hosted audiobook server) into the Homelab Dashboard to display recent additions or listening stats.
 
-> [!IMPORTANT]
-> **Duplicate Route Files:** I will be merging `homelab/routes/widget_routes.py` into `homelab/routes/widgets.py` and deleting `widget_routes.py` to resolve the duplication issue.
+## Identified Issues
+*   [x] **Misleading Feedback**: "Test Connection" triggers "Settings saved" feedback because of generic HTMX handling and missing `hx-include`. (Fixed in previous steps)
+*   [x] **Testing Logic**: "Test Connection" uses *saved* settings instead of *current form* settings for most integrations.
+*   [ ] **Code Consistency**: Integration modules do not consistently accept configuration overrides for testing.
 
 ## Proposed Changes
+### Integration Modules
+Refactor all integration modules to accept an optional `config_override` parameter.
+#### [MODIFY] [pihole.py](file:///Users/chris/homelab-dashboard/homelab/integrations/pihole.py)
+#### [MODIFY] [portainer.py](file:///Users/chris/homelab-dashboard/homelab/integrations/portainer.py)
+#### [MODIFY] [proxmox.py](file:///Users/chris/homelab-dashboard/homelab/integrations/proxmox.py)
+#### [MODIFY] [speedtest.py](file:///Users/chris/homelab-dashboard/homelab/integrations/speedtest.py)
+#### [MODIFY] [uptime_kuma.py](file:///Users/chris/homelab-dashboard/homelab/integrations/uptime_kuma.py)
 
-### Completed Tasks
+### Settings Routes
+#### [MODIFY] [settings_routes.py](file:///Users/chris/homelab-dashboard/homelab/routes/settings_routes.py)
+*   Update `test_integration` to construct a config object from `request.form` for ALL integrations.
+*   Pass this config to the respective tester function.
+#### [MODIFY] [homelab/settings.py](file:///Users/chris/homelab-dashboard/homelab/settings.py)
+- Add `audiobookshelf` to `DEFAULT_SETTINGS['integrations']`.
+  - Fields: `enabled`, `url`, `api_key`.
 
-- [x] **Resolve Duplicate Route Files**
-  - [x] Merge `homelab/routes/widget_routes.py` into `homelab/routes/widgets.py`.
-  - [x] Delete `homelab/routes/widget_routes.py`.
+#### [NEW] [homelab/integrations/audiobookshelf.py](file:///Users/chris/homelab-dashboard/homelab/integrations/audiobookshelf.py)
+- Fetch server status, total books, or recent additions.
 
-- [x] **Modularize `homelab/widgets.py`**
-  - [x] Create `homelab/widgets/` package.
-  - [x] Split into `weather.py`, `news.py`, `social.py`, `crypto.py`, `security.py`.
-  - [x] Standardize caching utility in `homelab/utils/cache.py`.
+#### [MODIFY] [homelab/routes/widgets.py](file:///Users/chris/homelab-dashboard/homelab/routes/widgets.py)
+- Add route `@widgets_bp.get("/api/widgets/audiobookshelf")`.
 
-- [x] **Refactor `static/js/loading.js`**
-  - [x] Split into `viz_server.js`, `viz_terrain.js`, `core.js` in `static/js/loading/`.
+### Frontend
+#### [MODIFY] [templates/partials/settings/integrations.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/integrations.html)
+- Add configuration card for Audiobookshelf.
 
-- [x] **Refactor `templates/settings.html`**
-  - [x] Extract tabs into `templates/partials/settings/`.
-  - [x] Move inline CSS to `static/css/settings.css`.
+#### [NEW] [templates/partials/widget_audiobookshelf.html](file:///Users/chris/homelab-dashboard/templates/partials/widget_audiobookshelf.html)
+- Create the widget UI (likely a card showing recent books or stats).
 
-- [x] **Refactor `templates/index.html` (JavaScript)**
-  - [x] Extract inline JS to `static/js/dashboard/ui.js` and `terminal.js`.
-
-- [x] **Cleanup Codebase**
-  - [x] Remove unused settings (`accent_color`, `refresh_interval`).
-
-## Remaining Tasks
-
-### 1. Refactor `templates/index.html` (HTML)
-**Goal:** Reduce the size and complexity of the main template by extracting sections into partials.
-- [ ] Create `templates/partials/dashboard/` directory.
-- [ ] Extract header to `templates/partials/dashboard/header.html`.
-- [ ] Extract loading screen HTML to `templates/partials/dashboard/loading_screen.html`.
-- [ ] Extract tickers (news, crypto, weather) to `templates/partials/dashboard/tickers.html`.
-- [ ] Extract terminal overlay to `templates/partials/dashboard/terminal_overlay.html`.
-- [ ] Update `templates/index.html` to include these partials.
-
-### 2. Verification
-- [ ] Verify all partials load correctly.
-- [ ] Ensure HTMX interactions still work with the new structure.
-
+#### [MODIFY] [templates/index.html](file:///Users/chris/homelab-dashboard/templates/index.html)
+- Add the widget to the "Integrations" section (conditionally rendered).
 
 ## Verification Plan
-
-### Automated Tests
-- Run the app and verify all pages load.
-- Check logs for import errors.
-
 ### Manual Verification
-- **Widgets:** Verify all widgets (Weather, News, Crypto, etc.) still load data.
-- **Settings:** Verify all tabs in Settings page work.
-- **Loading Screen:** Verify loading screen animation and data preloading.
-- **Terminal:** Verify terminal connects and works.
-- **Drag & Drop:** Verify app reordering works.
+1.  **Settings:** Enable Audiobookshelf, enter invalid URL/Key -> Verify error handling.
+2.  **Settings:** Enter valid URL/Key -> Verify "Test Connection" works.
+3.  **Dashboard:** Verify widget appears and displays data.

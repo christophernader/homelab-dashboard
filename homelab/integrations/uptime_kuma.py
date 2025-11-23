@@ -5,7 +5,7 @@ from typing import Optional
 from ..settings import get_integration_config
 
 
-def get_uptime_kuma_stats() -> Optional[dict]:
+def get_uptime_kuma_stats(config_override=None) -> Optional[dict]:
     """
     Fetch statistics from Uptime Kuma status page API.
 
@@ -13,7 +13,10 @@ def get_uptime_kuma_stats() -> Optional[dict]:
     - uptime_kuma_url: Base URL of Uptime Kuma (e.g., http://192.168.1.10:3001)
     - uptime_kuma_slug: Status page slug (e.g., 'default' or your custom slug)
     """
-    config = get_integration_config('uptime_kuma')
+    if config_override:
+        config = config_override
+    else:
+        config = get_integration_config('uptime_kuma')
     if not config or not config.get('enabled'):
         return None
 

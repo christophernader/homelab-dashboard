@@ -8,7 +8,8 @@ from homelab.widgets import (
     get_world_headlines, get_threat_status, get_usgs_earthquakes
 )
 from homelab.integrations import (
-    get_pihole_stats, get_speedtest_results, get_uptime_kuma_stats
+    get_pihole_stats, get_speedtest_results, get_uptime_kuma_stats,
+    get_audiobookshelf_stats
 )
 
 widgets_bp = Blueprint('widgets', __name__)
@@ -177,3 +178,9 @@ def widget_uptime_kuma():
     """Get Uptime Kuma widget."""
     stats = get_uptime_kuma_stats()
     return render_template("partials/widget_uptime_kuma.html", uptime=stats)
+
+@widgets_bp.get("/api/widgets/audiobookshelf")
+def widget_audiobookshelf():
+    """Get Audiobookshelf widget."""
+    stats = get_audiobookshelf_stats()
+    return render_template("partials/widget_audiobookshelf.html", abs=stats)

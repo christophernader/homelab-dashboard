@@ -10,7 +10,8 @@ from homelab.settings import (
 )
 from homelab.integrations import (
     get_pihole_stats, get_portainer_stats, get_proxmox_stats,
-    get_speedtest_results, get_uptime_kuma_stats
+    get_speedtest_results, get_uptime_kuma_stats,
+    get_audiobookshelf_stats
 )
 
 settings_bp = Blueprint('settings', __name__)
@@ -102,12 +103,25 @@ def test_integration(name: str):
         'proxmox': get_proxmox_stats,
         'speedtest': get_speedtest_results,
         'uptime_kuma': get_uptime_kuma_stats,
+        'audiobookshelf': get_audiobookshelf_stats,
     }
     tester = testers.get(name)
     if not tester:
         return {"status": "error", "message": "Unknown integration"}, 400
 
-    result = tester()
+    # Construct config from form data for testing
+    config = {}
+    for key in ['url', 'api_key', 'user', 'token_name', 'token_secret', 'slug']:
+        if key in request.form:
+            config[key] = request.form[key]
+    config['enabled'] = True # Assume enabled for testing
+
+    # Pass config to tester (all integrations now support config_override)
+    try:
+        result = tester(config)
+    except TypeError:
+        # Fallback for any tester that might not support arguments yet (safety check)
+        result = tester()
     if result and result.get('status') != 'error':
         return {"status": "ok", "message": "Connection successful"}, 200
     return {"status": "error", "message": result.get('error', 'Connection failed') if result else "Connection failed"}, 400

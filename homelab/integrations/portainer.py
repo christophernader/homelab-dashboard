@@ -5,7 +5,7 @@ from typing import Optional
 from ..settings import get_integration_config
 
 
-def get_portainer_stats() -> Optional[dict]:
+def get_portainer_stats(config_override=None) -> Optional[dict]:
     """
     Fetch statistics from Portainer API.
 
@@ -13,7 +13,10 @@ def get_portainer_stats() -> Optional[dict]:
     - portainer_url: Base URL of Portainer (e.g., http://192.168.1.10:9000)
     - portainer_api_key: API key from Portainer
     """
-    config = get_integration_config('portainer')
+    if config_override:
+        config = config_override
+    else:
+        config = get_integration_config('portainer')
     if not config or not config.get('enabled'):
         return None
 

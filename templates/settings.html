@@ -43,6 +43,9 @@
 </head>
 
 <body class="min-h-screen bg-mil-black text-mil-text font-sans">
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
   <!-- Header -->
   <header class="border-b border-mil-border bg-mil-dark">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -107,11 +110,75 @@
       tab.classList.add('border-mil-accent', 'text-mil-accent');
     }
 
-    // Show success/error notifications
+    // Toast notification function
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const bgColor = type === 'success' ? 'bg-mil-success' : 'bg-mil-error';
+      const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+      toast.className = `${bgColor} text-mil-black px-4 py-3 font-mono text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transform translate-x-full transition-transform duration-300`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+
+      container.appendChild(toast);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full');
+      });
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Handle HTMX responses for feedback
     document.body.addEventListener('htmx:afterRequest', (e) => {
-      if (e.detail.successful) {
-        // Could show a toast notification here
-        console.log('Settings saved');
+      const xhr = e.detail.xhr;
+      const path = e.detail.pathInfo.requestPath;
+
+      // Skip toggle requests (they're quick and don't need feedback)
+      if (path.includes('/toggle')) return;
+
+      try {
+        const response = JSON.parse(xhr.responseText);
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success
+          if (path.includes('/test')) {
+            showToast(response.message || 'Connection successful', 'success');
+          } else {
+            showToast(response.message || 'Settings saved', 'success');
+          }
+        } else {
+          // Error
+          showToast(response.message || 'Operation failed', 'error');
+        }
+      } catch (err) {
+        // Non-JSON response or parse error
+        if (xhr.status >= 200 && xhr.status < 300) {
+          if (path.includes('/test')) {
+            showToast('Connection successful', 'success');
+          } else {
+            showToast('Settings saved', 'success');
+          }
+        } else {
+          showToast('Operation failed', 'error');
+        }
+      }
+    });
+
+    // Handle HTMX errors
+    document.body.addEventListener('htmx:responseError', (e) => {
+      const xhr = e.detail.xhr;
+      try {
+        const response = JSON.parse(xhr.responseText);
+        showToast(response.message || 'Connection failed', 'error');
+      } catch (err) {
+        showToast('Connection failed', 'error');
       }
     });
   </script>

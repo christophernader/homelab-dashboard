@@ -1,0 +1,52 @@
+<div class="h-full flex flex-col">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-book-open text-mil-accent text-xs"></i>
+            <h3 class="text-xs font-mono font-bold text-mil-muted uppercase tracking-wider">AUDIOBOOKSHELF</h3>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-mil-success animate-pulse"></span>
+            <span class="text-[10px] font-mono text-mil-muted">{{ abs.total_books }} BOOKS</span>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+        {% if abs.status == 'error' %}
+        <div class="h-full flex flex-col items-center justify-center text-mil-error gap-2 text-center px-4">
+            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            <span class="text-[10px] font-mono uppercase">{{ abs.error }}</span>
+        </div>
+        {% else %}
+        {% for book in abs.recent_books %}
+        <div class="flex gap-3 group">
+            <div class="w-10 h-14 bg-mil-dark border border-mil-border flex-shrink-0 overflow-hidden relative">
+                {% if book.cover %}
+                <img src="{{ book.cover }}" alt="cover"
+                    class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-mil-muted">
+                    <i class="fa-solid fa-book text-xs"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+                <h4 class="text-xs font-mono text-mil-text truncate group-hover:text-mil-accent transition-colors"
+                    title="{{ book.title }}">
+                    {{ book.title }}
+                </h4>
+                <p class="text-[10px] text-mil-muted truncate">{{ book.author }}</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-[9px] font-mono text-mil-muted/60 uppercase">ADDED {{ book.added_at | int |
+                        timestamp_to_time }}</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="h-full flex flex-col items-center justify-center text-mil-muted/50 gap-2">
+            <i class="fa-solid fa-book-open text-xl"></i>
+            <span class="text-[10px] font-mono uppercase">NO BOOKS FOUND</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>

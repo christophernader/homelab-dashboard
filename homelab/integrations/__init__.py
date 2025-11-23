@@ -5,6 +5,7 @@ from .portainer import get_portainer_stats
 from .proxmox import get_proxmox_stats
 from .speedtest import get_speedtest_results
 from .uptime_kuma import get_uptime_kuma_stats
+from .audiobookshelf import get_audiobookshelf_stats
 
 __all__ = [
     'get_pihole_stats',
@@ -12,4 +13,5 @@ __all__ = [
     'get_proxmox_stats',
     'get_speedtest_results',
     'get_uptime_kuma_stats',
+    'get_audiobookshelf_stats',
 ]

@@ -5,7 +5,7 @@ from typing import Optional
 from ..settings import get_integration_config
 
 
-def get_proxmox_stats() -> Optional[dict]:
+def get_proxmox_stats(config_override=None) -> Optional[dict]:
     """
     Fetch statistics from Proxmox VE API.
 
@@ -15,7 +15,10 @@ def get_proxmox_stats() -> Optional[dict]:
     - proxmox_token_name: API token name
     - proxmox_token_secret: API token secret
     """
-    config = get_integration_config('proxmox')
+    if config_override:
+        config = config_override
+    else:
+        config = get_integration_config('proxmox')
     if not config or not config.get('enabled'):
         return None
 
