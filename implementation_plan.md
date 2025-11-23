@@ -4,13 +4,38 @@
 Integrate Audiobookshelf (self-hosted audiobook server) into the Homelab Dashboard to display recent additions or listening stats.
 
 ## Identified Issues
-*   [x] **Misleading Feedback**: "Test Connection" triggers "Settings saved" feedback because of generic HTMX handling and missing `hx-include`. (Fixed in previous steps)
-*   [x] **Testing Logic**: "Test Connection" uses *saved* settings instead of *current form* settings for most integrations.
-*   [ ] **Code Consistency**: Integration modules do not consistently accept configuration overrides for testing.
+*   [x] **Duplicate Toggles**: "Show Loading Screen" exists in both `appearance.html` and `dashboard.html`. (Fixed)
+*   [x] **Loading Screen Logic**: JS ignored the setting. (Fixed)
+*   [ ] **Missing Location UI**: The backend supports location settings, but there is no UI to configure them.
 
 ## Proposed Changes
-### Integration Modules
-Refactor all integration modules to accept an optional `config_override` parameter.
+### Dashboard Settings
+#### [MODIFY] [templates/partials/settings/dashboard.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/dashboard.html)
+*   Add a "Location" section.
+*   Inputs: City, Latitude, Longitude.
+*   Toggles: Use Auto-Location.
+*   Select: Units (Imperial/Metric).
+*   Use `hx-post="/api/settings/location"` to save.
+
+
+
+## Proposed Changes
+### Appearance & Dashboard
+#### [MODIFY] [templates/partials/settings/dashboard.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/dashboard.html)
+*   Remove the "Loading Screen" toggle section (lines 8-18). It belongs in Appearance.
+
+### Index Template
+#### [MODIFY] [templates/index.html](file:///Users/chris/homelab-dashboard/templates/index.html)
+*   Ensure the loading screen block is conditionally rendered based on `settings.appearance.show_loading_screen`.
+
+### JavaScript Logic
+#### [MODIFY] [static/js/loading/core.js](file:///Users/chris/homelab-dashboard/static/js/loading/core.js)
+*   Update `init` to check `window.showLoadingScreen`.
+*   If false:
+    *   Skip 3D initialization.
+    *   Call `loadAllData` but bypass the "wait for mouse" step.
+    *   Ensure `triggerEntranceAnimations` and `injectPreloadedData` are called immediately after data load.
+*   Refactor `finishLoading` to be robust if the loading screen element is missing.
 #### [MODIFY] [pihole.py](file:///Users/chris/homelab-dashboard/homelab/integrations/pihole.py)
 #### [MODIFY] [portainer.py](file:///Users/chris/homelab-dashboard/homelab/integrations/portainer.py)
 #### [MODIFY] [proxmox.py](file:///Users/chris/homelab-dashboard/homelab/integrations/proxmox.py)

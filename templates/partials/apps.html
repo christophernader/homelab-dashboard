@@ -2,23 +2,6 @@
   <div id="apps-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" hx-get="/api/apps" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#apps-container">
     {% for app in apps %}
       <div class="app-card group relative bg-mil-card shiny-border hover:border-mil-accent/50 transition-all" data-app-name="{{ app.name }}">
-        <!-- Drag handle -->
-        <div class="drag-handle absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-accent cursor-grab active:cursor-grabbing transition z-10 opacity-0 group-hover:opacity-100">
-          <i class="fa-solid fa-grip-vertical text-[10px]"></i>
-        </div>
-
-        <!-- Delete button -->
-        <button
-          type="button"
-          hx-delete="/api/apps/{{ app.name | urlencode }}"
-          hx-target="#apps-container"
-          hx-swap="innerHTML"
-          hx-confirm="Delete {{ app.name }}?"
-          class="absolute top-0 left-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-error transition z-10 opacity-0 group-hover:opacity-100"
-        >
-          <i class="fa-solid fa-trash-can text-[10px]"></i>
-        </button>
-
         <a href="{{ app.url }}" target="_blank" rel="noreferrer" class="block p-4">
           <div class="flex items-center gap-3">
             <div class="relative flex-shrink-0 w-11 h-11">
@@ -46,6 +29,23 @@
             <i class="fa-solid fa-arrow-up-right text-[10px] text-mil-muted/50 group-hover:text-mil-accent transition"></i>
           </div>
         </a>
+
+        <!-- Drag handle - positioned after link to stack on top -->
+        <div class="drag-handle absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-accent cursor-grab active:cursor-grabbing transition z-20 opacity-0 group-hover:opacity-100">
+          <i class="fa-solid fa-grip-vertical text-[10px]"></i>
+        </div>
+
+        <!-- Delete button - positioned after link to stack on top -->
+        <button
+          type="button"
+          hx-delete="/api/apps/{{ app.name | urlencode }}"
+          hx-target="#apps-container"
+          hx-swap="innerHTML"
+          hx-confirm="Delete {{ app.name }}?"
+          class="absolute top-0 left-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-error cursor-pointer transition z-20 opacity-0 group-hover:opacity-100"
+        >
+          <i class="fa-solid fa-trash-can text-[10px]"></i>
+        </button>
       </div>
     {% endfor %}
   </div>

@@ -142,6 +142,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('An error occurred', 'error');
             }
         }
+
+        // Reload on specific setting changes for immediate feedback
+        const path = e.detail.xhr.responseURL;
+        if (path && (
+            path.includes('/api/settings/dashboard/news_ticker_enabled/toggle') ||
+            path.includes('/api/settings/dashboard/weather_bar_enabled/toggle') ||
+            path.includes('/api/settings/dashboard/crypto_bar_enabled/toggle') ||
+            path.includes('/api/settings/appearance/show_loading_screen/toggle')
+        )) {
+            setTimeout(() => window.location.reload(), 500);
+        }
     });
 
     function showToast(message, type = 'success') {

@@ -25,6 +25,12 @@ const LoadingScreen = (function () {
     window.preloadedData = {};
 
     function init() {
+        // If loading screen is disabled, skip straight to data loading
+        if (!window.showLoadingScreen) {
+            loadAllData(true); // true = skip interaction
+            return;
+        }
+
         const container = document.getElementById('terrain-container');
         if (!container || typeof THREE === 'undefined') {
             finishLoading();
@@ -53,7 +59,7 @@ const LoadingScreen = (function () {
 
         window.addEventListener('resize', onResize);
         animate();
-        loadAllData();
+        loadAllData(false);
         updateBootTime();
     }
 
@@ -77,7 +83,7 @@ const LoadingScreen = (function () {
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    async function loadAllData() {
+    async function loadAllData(skipInteraction = false) {
         const loadBar = document.getElementById('load-bar');
         const loadPercent = document.getElementById('load-percent');
         const loadStatus = document.getElementById('load-status');
@@ -90,7 +96,7 @@ const LoadingScreen = (function () {
                 if (response.ok) {
                     if (step.key === 'system') {
                         systemData = await response.json();
-                        if (style === 'server' && typeof VizServer !== 'undefined') {
+                        if (!skipInteraction && style === 'server' && typeof VizServer !== 'undefined') {
                             VizServer.updatePinoutLabels(systemData);
                             VizServer.showPinouts();
                         }
@@ -106,8 +112,15 @@ const LoadingScreen = (function () {
 
         if (loadBar) loadBar.style.width = '100%';
         if (loadPercent) loadPercent.textContent = '100%';
-        if (loadStatus) loadStatus.innerHTML = '<span class="text-[#22c55e]">SYSTEM READY</span><br><span class="text-[#666] text-[8px] mt-2 block animate-pulse">MOVE MOUSE TO CONTINUE</span>';
-        waitForMouseToDismiss();
+
+        if (skipInteraction) {
+            injectPreloadedData();
+            triggerEntranceAnimations();
+            document.body.classList.add('loaded');
+        } else {
+            if (loadStatus) loadStatus.innerHTML = '<span class="text-[#22c55e]">SYSTEM READY</span><br><span class="text-[#666] text-[8px] mt-2 block animate-pulse">MOVE MOUSE TO CONTINUE</span>';
+            waitForMouseToDismiss();
+        }
     }
 
     function waitForMouseToDismiss() {

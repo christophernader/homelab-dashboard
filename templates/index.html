@@ -57,7 +57,9 @@
 </head>
 
 <body class="min-h-screen bg-mil-black text-mil-text font-sans relative">
+  {% if appearance.show_loading_screen %}
   {% include 'partials/dashboard/loading_screen.html' %}
+  {% endif %}
 
   <!-- Dynamic Grid Background -->
   <div class="grid-background"></div>

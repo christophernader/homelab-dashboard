@@ -5,17 +5,7 @@
     </div>
 
     <div class="bg-mil-card border border-mil-border p-6 space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Loading Screen</h3>
-                <p class="text-[10px] text-mil-muted">Show animated loading screen on startup</p>
-            </div>
-            <label class="toggle-switch">
-                <input type="checkbox" {% if settings.appearance.show_loading_screen %}checked{% endif %}
-                    hx-post="/api/settings/appearance/show_loading_screen/toggle" hx-trigger="change" hx-swap="none">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
+
 
         <div class="flex items-center justify-between">
             <div>
@@ -51,6 +41,76 @@
                     hx-post="/api/settings/dashboard/crypto_bar_enabled/toggle" hx-trigger="change" hx-swap="none">
                 <span class="toggle-slider"></span>
             </label>
+        </div>
+        <!-- Location Settings -->
+        <div class="pt-6 border-t border-mil-border">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-mono uppercase tracking-wider text-mil-text">Location</h3>
+                    <p class="text-[10px] text-mil-muted">Configure location for weather data</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-mono uppercase text-mil-muted">Auto-Detect</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="use_auto" {% if settings.location.use_auto %}checked{% endif %}
+                            onchange="document.getElementById('location-form').classList.toggle('opacity-50', this.checked); document.getElementById('location-form').querySelectorAll('input').forEach(i => i.disabled = this.checked); htmx.trigger(this, 'saveLocation')"
+                            hx-post="/api/settings/location" hx-trigger="saveLocation"
+                            hx-include="#location-container input" hx-swap="none">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="location-container">
+                <form id="location-form"
+                    class="grid gap-4 {% if settings.location.use_auto %}opacity-50 pointer-events-none{% endif %}"
+                    hx-post="/api/settings/location" hx-trigger="submit" hx-swap="none">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">City</label>
+                            <input type="text" name="city" value="{{ settings.location.city }}" placeholder="New York"
+                                class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Units</label>
+                            <select name="units"
+                                class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text focus:outline-none focus:border-mil-accent">
+                                <option value="imperial" {% if settings.location.units=='imperial' %}selected{% endif
+                                    %}>Imperial (°F)</option>
+                                <option value="metric" {% if settings.location.units=='metric' %}selected{% endif %}>
+                                    Metric (°C)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Latitude</label>
+                            <input type="text" name="latitude" value="{{ settings.location.latitude }}"
+                                placeholder="40.7128"
+                                class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-[10px] font-mono uppercase tracking-wider text-mil-muted mb-2">Longitude</label>
+                            <input type="text" name="longitude" value="{{ settings.location.longitude }}"
+                                placeholder="-74.0060"
+                                class="w-full bg-mil-dark border border-mil-border px-3 py-2 text-sm font-mono text-mil-text placeholder:text-mil-muted focus:outline-none focus:border-mil-accent">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-mil-accent text-mil-black hover:bg-mil-accent/90 transition-colors">
+                            <i class="fa-solid fa-save mr-2"></i> Save Location
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
