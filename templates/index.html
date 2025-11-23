@@ -129,6 +129,8 @@
     {% endif %}
 
     <!-- Threat Monitor Section - Full Width -->
+    <!-- Threat Monitor Section - Full Width -->
+    {% if widgets.threats.enabled %}
     <section class="mb-10" data-animate="slide-up">
       <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">GLOBAL THREAT ASSESSMENT
       </h2>
@@ -136,14 +138,19 @@
         <div class="h-64 bg-mil-card border border-mil-border animate-pulse"></div>
       </div>
     </section>
+    {% endif %}
 
+    <!-- Intel Feeds Grid -->
     <!-- Intel Feeds Grid -->
     <section data-animate="slide-up">
       <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted mb-4">INTEL FEEDS</h2>
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {% if widgets.news.enabled %}
         <div hx-get="/api/widgets/news-detailed" hx-trigger="load" hx-swap="innerHTML" data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
+        {% endif %}
+        {% if widgets.reddit.enabled %}
         <div hx-get="/api/widgets/reddit-detailed?sub=worldnews" hx-trigger="load" hx-swap="innerHTML"
           data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
@@ -152,6 +159,7 @@
           data-animate="scale">
           <div class="h-72 bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
+        {% endif %}
       </div>
     </section>
   </main>

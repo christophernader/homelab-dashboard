@@ -35,4 +35,5 @@ def index():
         location=location,
         appearance=appearance,
         dashboard=settings.get('dashboard', {}),
+        widgets=settings.get('widgets', {}),
     )

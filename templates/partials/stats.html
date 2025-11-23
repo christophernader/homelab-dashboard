@@ -1,5 +1,6 @@
 <div id="live-stats" class="grid gap-4 md:grid-cols-3" hx-get="/api/stats" hx-trigger="every 2s" hx-swap="innerHTML">
   <!-- CPU -->
+  {% if widgets.system_stats.enabled %}
   <div class="p-5 bg-mil-card shiny-border">
     <div class="flex items-center justify-between mb-4">
       <span class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">CPU USAGE</span>
@@ -13,8 +14,10 @@
       <div class="h-full bg-mil-accent progress-bar" style="width: {{ stats.cpu_percent }}%"></div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Memory -->
+  {% if widgets.system_stats.enabled %}
   <div class="p-5 bg-mil-card shiny-border">
     <div class="flex items-center justify-between mb-4">
       <span class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">MEMORY</span>
@@ -24,38 +27,42 @@
       <span class="text-3xl font-mono font-bold text-mil-text">{{ stats.mem_percent }}</span>
       <span class="text-sm font-mono text-mil-muted">%</span>
     </div>
-    <p class="text-[10px] font-mono text-mil-muted mt-1 uppercase">{{ human_bytes(stats.mem_used) }} / {{ human_bytes(stats.mem_total) }}</p>
+    <p class="text-[10px] font-mono text-mil-muted mt-1 uppercase">{{ human_bytes(stats.mem_used) }} / {{
+      human_bytes(stats.mem_total) }}</p>
     <div class="mt-3 h-1.5 bg-mil-black overflow-hidden">
       <div class="h-full bg-mil-accent progress-bar" style="width: {{ stats.mem_percent }}%"></div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Docker -->
+  {% if widgets.docker.enabled %}
   <div class="p-5 bg-mil-card shiny-border">
     <div class="flex items-center justify-between mb-4">
       <span class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest">CONTAINERS</span>
       <i class="fa-brands fa-docker text-mil-accent text-xs"></i>
     </div>
     {% if docker_error %}
-      <p class="text-xs font-mono text-mil-error uppercase">{{ docker_error }}</p>
+    <p class="text-xs font-mono text-mil-error uppercase">{{ docker_error }}</p>
     {% else %}
-      <div class="flex items-baseline gap-1">
-        <span class="text-3xl font-mono font-bold text-mil-text">{{ containers|length }}</span>
-        <span class="text-sm font-mono text-mil-muted">TOTAL</span>
+    <div class="flex items-baseline gap-1">
+      <span class="text-3xl font-mono font-bold text-mil-text">{{ containers|length }}</span>
+      <span class="text-sm font-mono text-mil-muted">TOTAL</span>
+    </div>
+    <div class="mt-4 flex gap-3">
+      {% set running = containers|selectattr('status', 'equalto', 'running')|list|length %}
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 bg-mil-success"></span>
+        <span class="text-[10px] font-mono text-mil-muted uppercase">{{ running }} RUNNING</span>
       </div>
-      <div class="mt-4 flex gap-3">
-        {% set running = containers|selectattr('status', 'equalto', 'running')|list|length %}
-        <div class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 bg-mil-success"></span>
-          <span class="text-[10px] font-mono text-mil-muted uppercase">{{ running }} RUNNING</span>
-        </div>
-        {% if containers|length - running > 0 %}
-        <div class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 bg-mil-error"></span>
-          <span class="text-[10px] font-mono text-mil-muted uppercase">{{ containers|length - running }} STOPPED</span>
-        </div>
-        {% endif %}
+      {% if containers|length - running > 0 %}
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 bg-mil-error"></span>
+        <span class="text-[10px] font-mono text-mil-muted uppercase">{{ containers|length - running }} STOPPED</span>
       </div>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
+  {% endif %}
 </div>

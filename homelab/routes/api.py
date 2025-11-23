@@ -15,6 +15,8 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route("/api/stats")
 def api_stats():
     """Get system stats partial."""
+    from homelab.settings import load_settings
+    settings = load_settings()
     containers, docker_error = fetch_containers()
     stats = system_stats()
     partial = render_template(
@@ -25,6 +27,7 @@ def api_stats():
         human_bytes=human_bytes,
         updated_at=datetime.now(timezone.utc),
         default_icon=DEFAULT_ICON,
+        widgets=settings.get('widgets', {}),
     )
     return partial
 

@@ -1,73 +1,80 @@
-# Implementation Plan - Audiobookshelf Integration
+# Implementation Plan - Auto-Detect & Edit Apps
 
 ## Goal
-Integrate Audiobookshelf (self-hosted audiobook server) into the Homelab Dashboard to display recent additions or listening stats.
+Implement a "Smart Auto-Detect" feature for apps that scans local Docker containers, intelligently assigns icons, and populates the dashboard without overwriting existing entries. Additionally, add an "Edit App" feature to allow users to refine the detected details (Name, URL, Icon).
 
-## Identified Issues
-*   [x] **Duplicate Toggles**: "Show Loading Screen" exists in both `appearance.html` and `dashboard.html`. (Fixed)
-*   [x] **Loading Screen Logic**: JS ignored the setting. (Fixed)
-*   [ ] **Missing Location UI**: The backend supports location settings, but there is no UI to configure them.
-
-## Proposed Changes
-### Dashboard Settings
-#### [MODIFY] [templates/partials/settings/dashboard.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/dashboard.html)
-*   Add a "Location" section.
-*   Inputs: City, Latitude, Longitude.
-*   Toggles: Use Auto-Location.
-*   Select: Units (Imperial/Metric).
-*   Use `hx-post="/api/settings/location"` to save.
-
-
+## User Review Required
+> [!IMPORTANT]
+> **Docker Socket Access**: Auto-detection requires access to the Docker socket. Ensure the container has `/var/run/docker.sock` mounted.
+> **URL Guessing**: The system will attempt to guess the URL based on exposed ports. It will default to `http://<host-ip>:<port>`. Since the backend doesn't know the external IP, it might default to `localhost` or require manual adjustment via the new Edit feature.
 
 ## Proposed Changes
-### Appearance & Dashboard
-#### [MODIFY] [templates/partials/settings/dashboard.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/dashboard.html)
-*   Remove the "Loading Screen" toggle section (lines 8-18). It belongs in Appearance.
 
-### Index Template
-#### [MODIFY] [templates/index.html](file:///Users/chris/homelab-dashboard/templates/index.html)
-*   Ensure the loading screen block is conditionally rendered based on `settings.appearance.show_loading_screen`.
+### Backend Logic
 
-### JavaScript Logic
-#### [MODIFY] [static/js/loading/core.js](file:///Users/chris/homelab-dashboard/static/js/loading/core.js)
-*   Update `init` to check `window.showLoadingScreen`.
-*   If false:
-    *   Skip 3D initialization.
-    *   Call `loadAllData` but bypass the "wait for mouse" step.
-    *   Ensure `triggerEntranceAnimations` and `injectPreloadedData` are called immediately after data load.
-*   Refactor `finishLoading` to be robust if the loading screen element is missing.
-#### [MODIFY] [pihole.py](file:///Users/chris/homelab-dashboard/homelab/integrations/pihole.py)
-#### [MODIFY] [portainer.py](file:///Users/chris/homelab-dashboard/homelab/integrations/portainer.py)
-#### [MODIFY] [proxmox.py](file:///Users/chris/homelab-dashboard/homelab/integrations/proxmox.py)
-#### [MODIFY] [speedtest.py](file:///Users/chris/homelab-dashboard/homelab/integrations/speedtest.py)
-#### [MODIFY] [uptime_kuma.py](file:///Users/chris/homelab-dashboard/homelab/integrations/uptime_kuma.py)
+#### [MODIFY] [homelab/docker_utils.py](file:///Users/chris/homelab-dashboard/homelab/docker_utils.py)
+*   Add `scan_docker_apps()` function:
+    *   List all containers.
+    *   **Label Parsing**: Check for `homelab.name`, `homelab.icon`, `homelab.url`, `homelab.port`, `homelab.ignore`.
+    *   **Traefik Support**: Parse `traefik.http.routers.*.rule` to extract `Host(`domain.com`)` for accurate URLs.
+    *   **Host Mode Handling**: If `network_mode: host`, check `homelab.port`, `ExposedPorts`, or fallback to a "known ports" dictionary (e.g., Plex=32400).
+    *   **Icon Logic**: Use `homelab.icon` > Image Name (e.g., `linuxserver/plex` -> `plex`) > Container Name.
+    *   Return list of discovered apps.
 
-### Settings Routes
-#### [MODIFY] [settings_routes.py](file:///Users/chris/homelab-dashboard/homelab/routes/settings_routes.py)
-*   Update `test_integration` to construct a config object from `request.form` for ALL integrations.
-*   Pass this config to the respective tester function.
-#### [MODIFY] [homelab/settings.py](file:///Users/chris/homelab-dashboard/homelab/settings.py)
-- Add `audiobookshelf` to `DEFAULT_SETTINGS['integrations']`.
-  - Fields: `enabled`, `url`, `api_key`.
+#### [MODIFY] [homelab/app_store.py](file:///Users/chris/homelab-dashboard/homelab/app_store.py)
+*   Add `merge_apps(new_apps)`:
+    *   Accept a list of specific apps to add (from the frontend preview).
+    *   Deduplicate against existing apps by URL or Name.
+    *   Save updated list.
+*   Add `update_app(original_name, new_data)`:
+    *   Find app by `original_name`.
+    *   Update fields (Name, URL, Icon).
+    *   Handle renaming.
 
-#### [NEW] [homelab/integrations/audiobookshelf.py](file:///Users/chris/homelab-dashboard/homelab/integrations/audiobookshelf.py)
-- Fetch server status, total books, or recent additions.
+#### [MODIFY] [homelab/routes/api.py](file:///Users/chris/homelab-dashboard/homelab/routes/api.py)
+*   `GET /api/apps/autodiscover`:
+    *   Call `docker_utils.scan_docker_apps()`.
+    *   Return JSON list of *potential* apps (for preview).
+*   `POST /api/apps/import`:
+    *   Accept JSON list of selected apps.
+    *   Call `app_store.merge_apps()`.
+    *   Return success.
+*   `GET /api/apps/<name>`: Return JSON details.
+*   `PUT /api/apps/<name>`: Update app.
 
-#### [MODIFY] [homelab/routes/widgets.py](file:///Users/chris/homelab-dashboard/homelab/routes/widgets.py)
-- Add route `@widgets_bp.get("/api/widgets/audiobookshelf")`.
+### Frontend UI
 
-### Frontend
-#### [MODIFY] [templates/partials/settings/integrations.html](file:///Users/chris/homelab-dashboard/templates/partials/settings/integrations.html)
-- Add configuration card for Audiobookshelf.
+#### [MODIFY] [templates/partials/dashboard/edit_panel.html](file:///Users/chris/homelab-dashboard/templates/partials/dashboard/edit_panel.html)
+*   **Edit Mode Support**:
+    *   Add hidden input `original_name`.
+    *   Dynamic form handling for Add vs Edit.
+*   **Auto-Detect Preview**:
+    *   Add "Auto-Detect" button.
+    *   On click, fetch `/api/apps/autodiscover`.
+    *   Show a **Preview List** (checkboxes) of found apps.
+    *   "Import Selected" button posts to `/api/apps/import`.
 
-#### [NEW] [templates/partials/widget_audiobookshelf.html](file:///Users/chris/homelab-dashboard/templates/partials/widget_audiobookshelf.html)
-- Create the widget UI (likely a card showing recent books or stats).
+#### [MODIFY] [templates/partials/apps.html](file:///Users/chris/homelab-dashboard/templates/partials/apps.html)
+*   Add "Edit" (pencil) button.
+*   On click, open `edit_panel.html` in "Edit Mode".
 
-#### [MODIFY] [templates/index.html](file:///Users/chris/homelab-dashboard/templates/index.html)
-- Add the widget to the "Integrations" section (conditionally rendered).
+#### [MODIFY] [static/js/dashboard/ui.js](file:///Users/chris/homelab-dashboard/static/js/dashboard/ui.js)
+*   Add `openEditApp(name)`: Populate form.
+*   Add `autoDetectApps()`: Handle the fetch, preview rendering, and import flow.
 
 ## Verification Plan
+### Automated Tests
+*   None (Visual/Integration testing required).
+
 ### Manual Verification
-1.  **Settings:** Enable Audiobookshelf, enter invalid URL/Key -> Verify error handling.
-2.  **Settings:** Enter valid URL/Key -> Verify "Test Connection" works.
-3.  **Dashboard:** Verify widget appears and displays data.
+1.  **Auto-Detect**:
+    *   Click "Auto-Detect".
+    *   Verify new Docker containers appear as apps.
+    *   Verify existing apps are NOT duplicated.
+    *   Verify icons are reasonably accurate.
+2.  **Edit App**:
+    *   Click "Edit" on an app.
+    *   Change Name, URL, and Icon.
+    *   Save.
+    *   Verify changes are reflected in the grid.
+    *   Verify clicking the app link works with the new URL.
