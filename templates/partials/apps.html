@@ -1,60 +1,64 @@
 {% if apps %}
-  <div id="apps-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" hx-get="/api/apps" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#apps-container">
-    {% for app in apps %}
-      <div class="app-card group relative bg-mil-card shiny-border hover:border-mil-accent/50 transition-all" data-app-name="{{ app.name }}">
-        <a href="{{ app.url }}" target="_blank" rel="noreferrer" class="block p-4">
-          <div class="flex items-center gap-3">
-            <div class="relative flex-shrink-0 w-11 h-11">
-              <img src="{{ app.icon or '' }}" alt="{{ app.name }}" class="w-full h-full object-contain"
-                   onerror="this.src='{{ default_icon }}'">
-              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border border-mil-card {{ 'bg-mil-success' if app.online else 'bg-mil-error' }}"></span>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="text-sm font-mono font-semibold text-mil-text truncate uppercase tracking-wide">{{ app.name }}</h3>
-              <p class="text-[10px] font-mono text-mil-muted truncate mt-0.5">{{ app.url }}</p>
-            </div>
-          </div>
-
-          <div class="mt-3 pt-3 border-t border-mil-border flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              {% if app.online %}
-                <span class="text-[10px] font-mono font-bold text-mil-success uppercase tracking-wider">ONLINE</span>
-                {% if app.response_time %}
-                  <span class="text-[10px] font-mono text-mil-muted">{{ app.response_time }}ms</span>
-                {% endif %}
-              {% else %}
-                <span class="text-[10px] font-mono font-bold text-mil-error uppercase tracking-wider">OFFLINE</span>
-              {% endif %}
-            </div>
-            <i class="fa-solid fa-arrow-up-right text-[10px] text-mil-muted/50 group-hover:text-mil-accent transition"></i>
-          </div>
-        </a>
-
-        <!-- Drag handle - positioned after link to stack on top -->
-        <div class="drag-handle absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-accent cursor-grab active:cursor-grabbing transition z-20 opacity-0 group-hover:opacity-100">
-          <i class="fa-solid fa-grip-vertical text-[10px]"></i>
+<div id="apps-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+  {% for app in apps %}
+  <div class="app-card group relative bg-mil-card shiny-border hover:border-mil-accent/50 transition-all"
+    data-app-name="{{ app.name }}">
+    <a href="{{ app.url }}" target="_blank" rel="noreferrer" class="block p-4">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0 w-11 h-11">
+          <img src="{{ app.icon or '' }}" alt="{{ app.name }}" class="w-full h-full object-contain"
+            onerror="this.src='{{ default_icon }}'">
+          <span
+            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border border-mil-card {{ 'bg-mil-success' if app.online else 'bg-mil-error' }}"></span>
         </div>
-
-        <!-- Delete button - positioned after link to stack on top -->
-        <button
-          type="button"
-          hx-delete="/api/apps/{{ app.name | urlencode }}"
-          hx-target="#apps-container"
-          hx-swap="innerHTML"
-          hx-confirm="Delete {{ app.name }}?"
-          class="absolute top-0 left-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-error cursor-pointer transition z-20 opacity-0 group-hover:opacity-100"
-        >
-          <i class="fa-solid fa-trash-can text-[10px]"></i>
-        </button>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-mono font-semibold text-mil-text truncate uppercase tracking-wide">{{ app.name }}</h3>
+          <p class="text-[10px] font-mono text-mil-muted truncate mt-0.5">{{ app.url }}</p>
+        </div>
       </div>
-    {% endfor %}
-  </div>
-{% else %}
-  <div id="apps-grid" class="flex flex-col items-center justify-center py-16 px-8 border border-dashed border-mil-border bg-mil-card">
-    <div class="w-12 h-12 border border-mil-border flex items-center justify-center mb-4">
-      <i class="fa-solid fa-plus text-mil-muted"></i>
+
+      <div class="mt-3 pt-3 border-t border-mil-border flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          {% if app.online %}
+          <span class="text-[10px] font-mono font-bold text-mil-success uppercase tracking-wider">ONLINE</span>
+          {% if app.response_time %}
+          <span class="text-[10px] font-mono text-mil-muted">{{ app.response_time }}ms</span>
+          {% endif %}
+          {% else %}
+          <span class="text-[10px] font-mono font-bold text-mil-error uppercase tracking-wider">OFFLINE</span>
+          {% endif %}
+        </div>
+        <i class="fa-solid fa-arrow-up-right text-[10px] text-mil-muted/50 group-hover:text-mil-accent transition"></i>
+      </div>
+    </a>
+
+    <!-- Drag handle - positioned after link to stack on top -->
+    <div
+      class="drag-handle absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-accent cursor-grab active:cursor-grabbing transition z-20 opacity-0 group-hover:opacity-100">
+      <i class="fa-solid fa-grip-vertical text-[10px]"></i>
     </div>
-    <p class="text-xs font-mono font-bold text-mil-muted uppercase tracking-widest">NO SERVICES</p>
-    <p class="text-[10px] font-mono text-mil-muted mt-1">Click "ADD SERVICE" to begin</p>
+
+    <!-- Edit button -->
+    <button type="button" data-edit-app="{{ app.name }}"
+      class="edit-app-btn absolute top-0 left-8 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-accent cursor-pointer transition z-20 opacity-0 group-hover:opacity-100">
+      <i class="fa-solid fa-pen text-[10px]"></i>
+    </button>
+
+    <!-- Delete button - handled by JS -->
+    <button type="button" data-delete-app="{{ app.name }}"
+      class="absolute top-0 left-0 w-8 h-8 flex items-center justify-center text-mil-muted/30 hover:text-mil-error cursor-pointer transition z-20 opacity-0 group-hover:opacity-100">
+      <i class="fa-solid fa-trash-can text-[10px]"></i>
+    </button>
   </div>
+  {% endfor %}
+</div>
+{% else %}
+<div id="apps-grid"
+  class="flex flex-col items-center justify-center py-16 px-8 border border-dashed border-mil-border bg-mil-card">
+  <div class="w-12 h-12 border border-mil-border flex items-center justify-center mb-4">
+    <i class="fa-solid fa-plus text-mil-muted"></i>
+  </div>
+  <p class="text-xs font-mono font-bold text-mil-muted uppercase tracking-widest">NO SERVICES</p>
+  <p class="text-[10px] font-mono text-mil-muted mt-1">Click "ADD SERVICE" to begin</p>
+</div>
 {% endif %}

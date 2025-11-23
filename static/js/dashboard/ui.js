@@ -90,6 +90,30 @@ document.addEventListener('DOMContentLoaded', () => {
         tile.classList.add('ring-1', 'ring-mil-accent');
     });
 
+    // Edit app button (delegated)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-edit-app]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const appName = btn.dataset.editApp;
+        if (appName && typeof openEditApp === 'function') {
+            openEditApp(appName);
+        }
+    });
+
+    // Delete app button (delegated) - custom confirmation
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-delete-app]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const appName = btn.dataset.deleteApp;
+        if (appName) {
+            showDeleteConfirm(appName);
+        }
+    });
+
     // Form success
     document.body.addEventListener('app_added', (e) => {
         const slot = document.getElementById('form-message');
@@ -160,6 +184,15 @@ document.addEventListener('DOMContentLoaded', () => {
         )) {
             setTimeout(() => window.location.reload(), 500);
         }
+
+        // Close edit panel on successful app add/update
+        const reqPath = e.detail.requestConfig?.path || '';
+        if (xhr.status >= 200 && xhr.status < 300) {
+            if (reqPath.includes('/api/apps/add') || (e.detail.requestConfig?.verb === 'put' && reqPath.includes('/api/apps/'))) {
+                closeEditPanel();
+                showToast('Service saved');
+            }
+        }
     });
 
     function showToast(message, type = 'success') {
@@ -179,7 +212,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // Delete confirmation modal
+    function showDeleteConfirm(appName) {
+        // Remove any existing modal
+        document.getElementById('delete-modal')?.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'delete-modal';
+        modal.className = 'fixed inset-0 bg-black/80 z-[100] flex items-center justify-center';
+        modal.innerHTML = `
+            <div class="bg-mil-dark border border-mil-border p-6 max-w-sm w-full mx-4">
+                <h3 class="text-sm font-mono font-bold text-mil-text uppercase tracking-wider mb-4">Delete Service</h3>
+                <p class="text-xs font-mono text-mil-muted mb-6">Are you sure you want to delete <span class="text-mil-text">${appName}</span>?</p>
+                <div class="flex gap-3">
+                    <button id="cancel-delete" class="flex-1 px-4 py-2 border border-mil-border text-mil-muted font-mono text-xs uppercase tracking-wider hover:border-mil-text hover:text-mil-text transition">
+                        Cancel
+                    </button>
+                    <button id="confirm-delete" class="flex-1 px-4 py-2 bg-mil-error text-mil-black font-mono text-xs uppercase tracking-wider font-bold hover:bg-mil-error/80 transition">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Handle cancel
+        document.getElementById('cancel-delete').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+        // Handle confirm
+        document.getElementById('confirm-delete').onclick = async () => {
+            try {
+                const resp = await fetch(`/api/apps/${encodeURIComponent(appName)}`, { method: 'DELETE' });
+                if (resp.ok) {
+                    modal.remove();
+                    showToast('Service deleted');
+                    htmx.ajax('GET', '/api/apps', '#apps-container');
+                } else {
+                    showToast('Delete failed', 'error');
+                }
+            } catch (err) {
+                showToast('Delete failed', 'error');
+            }
+        };
+    }
+
     // --- Auto-Detect & Edit App Logic ---
+
+    let isEditMode = false; // Track if we're opening in edit mode
 
     window.openEditApp = async function (name) {
         try {
@@ -187,85 +268,161 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resp.ok) throw new Error('Failed to fetch app');
             const app = await resp.json();
 
-            // Populate form
+            // Set edit mode flag BEFORE opening panel
+            isEditMode = true;
+
+            // Open panel first (without reset since isEditMode is true)
+            const panel = document.getElementById('edit-panel');
+            const overlay = document.getElementById('edit-overlay');
+            if (panel.classList.contains('translate-x-full')) {
+                panel.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
+                editMode = true;
+            }
+
+            // Now populate form AFTER panel is open
             document.getElementById('original-name').value = app.name;
             document.getElementById('app-name').value = app.name;
             document.getElementById('app-url').value = app.url;
             document.getElementById('icon-url').value = app.icon || '';
-            document.getElementById('icon-preview').src = app.icon || '{{ default_icon }}';
+            const iconPreview = document.getElementById('icon-preview');
+            if (iconPreview) {
+                iconPreview.src = app.icon || iconPreview.dataset.defaultIcon || '';
+            }
 
             // Update UI for Edit Mode
             document.getElementById('edit-panel-title').textContent = 'EDIT SERVICE';
             document.getElementById('submit-text').textContent = 'SAVE CHANGES';
-
-            // Update HTMX attributes manually for Edit
-            const form = document.getElementById('add-app-form');
-            form.setAttribute('hx-put', `/api/apps/${encodeURIComponent(name)}`);
-            htmx.process(form); // Re-process to pick up new attribute
-
-            // Handle form submission manually to support PUT
-            form.onsubmit = function (e) {
-                e.preventDefault();
-                const formData = new FormData(form);
-
-                fetch(`/api/apps/${encodeURIComponent(name)}`, {
-                    method: 'PUT',
-                    body: formData
-                }).then(async r => {
-                    if (r.ok) {
-                        toggleEditMode();
-                        htmx.trigger('#apps-container', 'load'); // Refresh grid
-                        showToast('App updated successfully');
-                    } else {
-                        showToast('Update failed', 'error');
-                    }
-                });
-            };
+            document.getElementById('submit-btn').querySelector('i').className = 'fa-solid fa-check text-xs';
 
             // Hide Auto-Detect section in Edit Mode
             document.getElementById('auto-detect-section').classList.add('hidden');
+            document.getElementById('panel-footer').classList.add('hidden');
 
-            toggleEditMode();
+            // Configure HTMX for Edit Mode
+            const form = document.getElementById('add-app-form');
+
+            // Remove POST attributes
+            form.removeAttribute('hx-post');
+
+            // Add PUT attributes
+            form.setAttribute('hx-put', `/api/apps/${encodeURIComponent(app.name)}`);
+            form.setAttribute('hx-target', '#apps-container');
+            form.setAttribute('hx-swap', 'innerHTML');
+
+            // Process with HTMX
+            if (typeof htmx !== 'undefined') {
+                htmx.process(form);
+            }
+
+            // Remove manual submit handler if it exists
+            form.onsubmit = null;
+
         } catch (err) {
-            showToast('Error loading app details', 'error');
+            console.error('Edit error:', err);
+            showToast('Error loading service details', 'error');
         }
     };
 
-    // Reset form when closing or opening fresh
+    // Close panel and reset
+    window.closeEditPanel = function () {
+        const panel = document.getElementById('edit-panel');
+        const overlay = document.getElementById('edit-overlay');
+
+        panel.classList.add('translate-x-full');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+
+        editMode = false;
+        isEditMode = false;
+
+        // Reset form
+        resetEditForm();
+    };
+
+    function resetEditForm() {
+        const form = document.getElementById('add-app-form');
+        form.reset();
+        form.onsubmit = null;
+        document.getElementById('original-name').value = '';
+        document.getElementById('edit-panel-title').textContent = 'ADD SERVICE';
+        document.getElementById('submit-text').textContent = 'ADD TO DASHBOARD';
+        document.getElementById('submit-btn').querySelector('i').className = 'fa-solid fa-plus text-xs';
+        document.getElementById('auto-detect-section').classList.remove('hidden');
+        document.getElementById('auto-detect-preview').classList.add('hidden');
+        document.getElementById('detected-apps-list').innerHTML = '';
+        document.getElementById('panel-footer')?.classList.remove('hidden');
+
+        // Reset icon preview to default
+        const iconPreview = document.getElementById('icon-preview');
+        if (iconPreview && iconPreview.dataset.defaultIcon) {
+            iconPreview.src = iconPreview.dataset.defaultIcon;
+            document.getElementById('icon-url').value = iconPreview.dataset.defaultIcon;
+        }
+
+        // Restore HTMX attributes
+        form.setAttribute('hx-post', '/api/apps/add');
+        form.setAttribute('hx-target', '#apps-container');
+        form.setAttribute('hx-swap', 'innerHTML');
+        if (typeof htmx !== 'undefined') htmx.process(form);
+    }
+
+    // Override toggleEditMode to use new close function
     const originalToggleEditMode = window.toggleEditMode;
     window.toggleEditMode = function () {
         const panel = document.getElementById('edit-panel');
         const isClosed = panel.classList.contains('translate-x-full');
 
-        if (isClosed) {
-            // Reset to "Add Mode" defaults
-            document.getElementById('add-app-form').reset();
-            document.getElementById('original-name').value = '';
-            document.getElementById('edit-panel-title').textContent = 'ADD SERVICE';
-            document.getElementById('submit-text').textContent = 'ADD TO DASHBOARD';
-            document.getElementById('auto-detect-section').classList.remove('hidden');
-            document.getElementById('auto-detect-preview').classList.add('hidden');
-            document.getElementById('detected-apps-list').innerHTML = '';
-
-            // Reset form submission handler
-            const form = document.getElementById('add-app-form');
-            form.onsubmit = null; // Remove custom PUT handler
-            form.setAttribute('hx-post', '/api/apps/add');
-            htmx.process(form);
+        if (!isClosed) {
+            // Closing - use new close function
+            closeEditPanel();
+        } else {
+            // Opening fresh (Add mode) - reset first, then open
+            if (!window.isEditMode) {
+                resetEditForm();
+            }
+            originalToggleEditMode();
         }
-
-        originalToggleEditMode();
     };
 
     window.autoDetectApps = async function () {
-        const btn = document.querySelector('#auto-detect-section button');
+        const btn = document.getElementById('auto-detect-btn');
+        const progress = document.getElementById('scan-progress');
+        const progressBar = document.getElementById('scan-progress-bar');
+        const statusText = document.getElementById('scan-status');
         const originalText = btn.innerHTML;
+
         btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> SCANNING...';
         btn.disabled = true;
+        progress.classList.remove('hidden');
+
+        // Simulate progress stages
+        const stages = [
+            { pct: 20, text: 'Connecting to Docker...' },
+            { pct: 40, text: 'Scanning containers...' },
+            { pct: 60, text: 'Parsing labels & ports...' },
+            { pct: 80, text: 'Resolving icons...' },
+            { pct: 100, text: 'Complete!' }
+        ];
+
+        let stageIdx = 0;
+        const progressInterval = setInterval(() => {
+            if (stageIdx < stages.length - 1) {
+                progressBar.style.width = stages[stageIdx].pct + '%';
+                statusText.textContent = stages[stageIdx].text;
+                stageIdx++;
+            }
+        }, 400);
 
         try {
             const resp = await fetch('/api/apps/autodiscover');
             const apps = await resp.json();
+
+            // Complete progress
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            statusText.textContent = `Found ${apps.length} service(s)`;
 
             const list = document.getElementById('detected-apps-list');
             list.innerHTML = '';
@@ -274,6 +431,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 list.innerHTML = '<p class="text-xs text-mil-muted font-mono">No new services found.</p>';
             } else {
                 apps.forEach(app => {
+                    // Fix localhost/127.0.0.1 to match current hostname
+                    if (app.url.includes('localhost') || app.url.includes('127.0.0.1')) {
+                        app.url = app.url.replace(/localhost|127\.0\.0\.1/g, window.location.hostname);
+                    }
+
                     const div = document.createElement('div');
                     div.className = 'flex items-center gap-3 p-2 bg-mil-black border border-mil-border';
                     div.innerHTML = `
@@ -292,10 +454,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('auto-detect-preview').classList.remove('hidden');
         } catch (err) {
+            clearInterval(progressInterval);
             showToast('Scan failed', 'error');
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
+            // Hide progress after a short delay
+            setTimeout(() => {
+                progress.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }, 2000);
         }
     };
 
@@ -328,33 +496,81 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error importing apps', 'error');
         }
     };
-
-    // Geolocation
-    if (window.locationSettings && window.locationSettings.useAuto && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-
-                // Update weather bar with browser location
-                const weatherBar = document.getElementById('weather-bar');
-                if (weatherBar && typeof htmx !== 'undefined') {
-                    weatherBar.setAttribute('hx-get', `/api/widgets/weather-bar?lat=${lat}&lon=${lon}`);
-                    htmx.process(weatherBar);
-                    htmx.trigger(weatherBar, 'load');
-                }
-
-                // Update weather widget if exists
-                const weatherContainer = document.getElementById('weather-container');
-                if (weatherContainer && typeof htmx !== 'undefined') {
-                    weatherContainer.setAttribute('hx-get', `/api/widgets/weather?lat=${lat}&lon=${lon}`);
-                    htmx.process(weatherContainer);
-                    htmx.trigger(weatherContainer, 'load');
-                }
-            },
-            () => console.log('Geolocation denied or unavailable')
-        );
-    } else if (window.locationSettings && !window.locationSettings.useAuto) {
-        console.log('Using manual location settings');
-    }
 });
+
+// Global functions for edit panel
+window.isEditMode = false;
+
+window.closeEditPanel = function () {
+    const panel = document.getElementById('edit-panel');
+    const overlay = document.getElementById('edit-overlay');
+
+    panel.classList.add('translate-x-full');
+    overlay.classList.add('opacity-0');
+    setTimeout(() => overlay.classList.add('hidden'), 300);
+
+    editMode = false;
+    window.isEditMode = false;
+
+    // Reset form
+    resetEditForm();
+};
+
+function resetEditForm() {
+    const form = document.getElementById('add-app-form');
+    if (!form) return;
+
+    form.reset();
+    form.onsubmit = null;
+    document.getElementById('original-name').value = '';
+    document.getElementById('edit-panel-title').textContent = 'ADD SERVICE';
+    document.getElementById('submit-text').textContent = 'ADD TO DASHBOARD';
+    document.getElementById('submit-btn').querySelector('i').className = 'fa-solid fa-plus text-xs';
+    document.getElementById('auto-detect-section').classList.remove('hidden');
+    document.getElementById('auto-detect-preview').classList.add('hidden');
+    document.getElementById('detected-apps-list').innerHTML = '';
+    document.getElementById('panel-footer')?.classList.remove('hidden');
+
+    // Reset icon preview to default
+    const iconPreview = document.getElementById('icon-preview');
+    if (iconPreview && iconPreview.dataset.defaultIcon) {
+        iconPreview.src = iconPreview.dataset.defaultIcon;
+        document.getElementById('icon-url').value = iconPreview.dataset.defaultIcon;
+    }
+
+    // Restore HTMX attributes
+    form.setAttribute('hx-post', '/api/apps/add');
+    form.setAttribute('hx-target', '#apps-container');
+    form.setAttribute('hx-swap', 'innerHTML');
+    if (typeof htmx !== 'undefined') htmx.process(form);
+}
+
+// Geolocation
+if (window.locationSettings && window.locationSettings.useAuto && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            // Update weather bar with browser location
+            const weatherBar = document.getElementById('weather-bar');
+            if (weatherBar && typeof htmx !== 'undefined') {
+                weatherBar.setAttribute('hx-get', `/api/widgets/weather-bar?lat=${lat}&lon=${lon}`);
+                htmx.process(weatherBar);
+                htmx.trigger(weatherBar, 'load');
+            }
+
+            // Update weather widget if exists
+            const weatherContainer = document.getElementById('weather-container');
+            if (weatherContainer && typeof htmx !== 'undefined') {
+                weatherContainer.setAttribute('hx-get', `/api/widgets/weather?lat=${lat}&lon=${lon}`);
+                htmx.process(weatherContainer);
+                htmx.trigger(weatherContainer, 'load');
+            }
+        },
+        () => console.log('Geolocation denied or unavailable')
+    );
+} else if (window.locationSettings && !window.locationSettings.useAuto) {
+    console.log('Using manual location settings');
+}
+

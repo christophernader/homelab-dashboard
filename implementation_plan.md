@@ -62,19 +62,33 @@ Implement a "Smart Auto-Detect" feature for apps that scans local Docker contain
 *   Add `openEditApp(name)`: Populate form.
 *   Add `autoDetectApps()`: Handle the fetch, preview rendering, and import flow.
 
-## Verification Plan
-### Automated Tests
-*   None (Visual/Integration testing required).
+### Fixes & Improvements
 
+#### [FIX] [static/js/dashboard/ui.js](file:///Users/chris/homelab-dashboard/static/js/dashboard/ui.js)
+*   **Refactor Edit Mode to HTMX**:
+    *   Instead of manual `fetch` and `onsubmit`, use HTMX for editing.
+    *   `openEditApp`:
+        *   `form.setAttribute('hx-put', '/api/apps/' + name)`
+        *   `form.removeAttribute('hx-post')`
+        *   `form.setAttribute('hx-target', '#apps-container')`
+        *   `htmx.process(form)`
+    *   Add `htmx:afterOnLoad` listener to form to close panel on success.
+    *   This ensures `hx-target` is always respected and prevents the form from being replaced by the grid.
+
+#### [FIX] [homelab/docker_utils.py](file:///Users/chris/homelab-dashboard/homelab/docker_utils.py)
+*   **Fix Icon 404s**:
+    *   Stop guessing `icon` from Docker image name.
+    *   Only use `homelab.icon` label.
+    *   If no label, leave icon empty (frontend will show default).
+    *   This prevents the browser from trying to load `http://host/linuxserver/plex` etc.
+
+## Verification Plan
 ### Manual Verification
-1.  **Auto-Detect**:
-    *   Click "Auto-Detect".
-    *   Verify new Docker containers appear as apps.
-    *   Verify existing apps are NOT duplicated.
-    *   Verify icons are reasonably accurate.
-2.  **Edit App**:
-    *   Click "Edit" on an app.
-    *   Change Name, URL, and Icon.
-    *   Save.
-    *   Verify changes are reflected in the grid.
-    *   Verify clicking the app link works with the new URL.
+1.  **Edit App**:
+    *   Click "Edit". Verify form populates.
+    *   Click "Save". Verify panel closes and grid updates.
+    *   Click "Edit" *again*. Verify form populates correctly (no "all apps" issue).
+2.  **Auto-Detect**:
+    *   Run scan.
+    *   Verify console does NOT show 404 errors for icons.
+    *   Verify apps without explicit icon labels show the default icon.

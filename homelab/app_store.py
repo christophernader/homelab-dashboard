@@ -113,6 +113,14 @@ def delete_app(name: str) -> bool:
     return write_pool.submit(write).result()
 
 
+def delete_all_apps() -> bool:
+    """Delete all apps."""
+    def write():
+        save_apps([])
+        return True
+    return write_pool.submit(write).result()
+
+
 def reorder_apps(from_name: str, to_name: str, position: str = "before") -> bool:
     """Move app to before or after another app."""
     def write():
@@ -181,3 +189,72 @@ def apply_order(order: list[str]) -> bool:
         return False
 
     return write_pool.submit(write).result()
+
+
+def merge_apps(new_apps: List[dict]) -> int:
+    """Merge new apps into the store, avoiding duplicates. Returns count added."""
+    def write():
+        current = load_apps()
+        existing_urls = {normalize_url(a.get("url", "")) for a in current}
+        existing_names = {a.get("name", "").lower() for a in current}
+        
+        added_count = 0
+        for app in new_apps:
+            url = normalize_url(app.get("url", ""))
+            name = app.get("name", "")
+            
+            # Skip if URL or Name already exists
+            if url in existing_urls or name.lower() in existing_names:
+                continue
+                
+            current.append({
+                "name": name,
+                "url": url,
+                "icon": app.get("icon", "")
+            })
+            existing_urls.add(url)
+            existing_names.add(name.lower())
+            added_count += 1
+            
+        if added_count > 0:
+            save_apps(current)
+        return added_count
+
+    return write_pool.submit(write).result()
+
+
+def update_app(original_name: str, new_data: dict) -> bool:
+    """Update an existing app."""
+    def write():
+        current = load_apps()
+        
+        # Check if renaming to an existing name (conflict check)
+        new_name = new_data.get("name")
+        if new_name and new_name != original_name:
+            if any(a.get("name") == new_name for a in current):
+                return False # Name conflict
+
+        updated = False
+        for app in current:
+            if app.get("name") == original_name:
+                app["name"] = new_data.get("name", app["name"])
+                app["url"] = normalize_url(new_data.get("url", app["url"]))
+                app["icon"] = new_data.get("icon", app["icon"])
+                updated = True
+                break
+        
+        if updated:
+            save_apps(current)
+            return True
+        return False
+
+    return write_pool.submit(write).result()
+
+
+def get_app(name: str) -> dict | None:
+    """Get a single app by name."""
+    apps = load_apps()
+    for app in apps:
+        if app.get("name") == name:
+            return app
+    return None

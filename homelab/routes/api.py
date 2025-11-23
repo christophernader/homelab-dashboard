@@ -79,6 +79,15 @@ def delete_app_route(name: str):
     return "Not found", 404
 
 
+@api_bp.delete("/api/apps")
+def delete_all_apps_route():
+    """Delete all apps."""
+    from homelab.app_store import delete_all_apps, apps_with_status
+    delete_all_apps()
+    apps = apps_with_status()
+    return render_template("partials/apps.html", apps=apps, default_icon=DEFAULT_ICON)
+
+
 @api_bp.post("/api/apps/reorder")
 def reorder_apps_route():
     """Reorder apps."""
@@ -105,3 +114,52 @@ def search_icons():
     query = request.args.get("q", "").strip().lower()
     icons = icon_payload(query=query or None, limit=50)
     return render_template("partials/icon_results.html", icons=icons, query=query)
+
+
+@api_bp.get("/api/apps/autodiscover")
+def autodiscover_apps():
+    """Scan for Docker apps and return potential matches."""
+    from homelab.docker_utils import scan_docker_apps
+    apps = scan_docker_apps()
+    return jsonify(apps)
+
+
+@api_bp.post("/api/apps/import")
+def import_apps():
+    """Import selected apps."""
+    from homelab.app_store import merge_apps, apps_with_status
+    
+    data = request.get_json()
+    if not data or not isinstance(data, list):
+        return "Bad request", 400
+        
+    count = merge_apps(data)
+    
+    # Return updated grid
+    apps = apps_with_status()
+    response = render_template("partials/apps.html", apps=apps, default_icon=DEFAULT_ICON)
+    return response, 200, {"HX-Trigger": json.dumps({"apps_imported": count})}
+
+
+@api_bp.get("/api/apps/<name>")
+def get_app_details(name: str):
+    """Get app details."""
+    from homelab.app_store import get_app
+    app = get_app(name)
+    if not app:
+        return "Not found", 404
+    return jsonify(app)
+
+
+@api_bp.put("/api/apps/<name>")
+def update_app_details(name: str):
+    """Update app details."""
+    from homelab.app_store import update_app, apps_with_status
+    
+    data = request.form.to_dict()
+    if not update_app(name, data):
+        return "Update failed or name conflict", 400
+        
+    apps = apps_with_status()
+    response = render_template("partials/apps.html", apps=apps, default_icon=DEFAULT_ICON)
+    return response, 200, {"HX-Trigger": json.dumps({"app_updated": name})}

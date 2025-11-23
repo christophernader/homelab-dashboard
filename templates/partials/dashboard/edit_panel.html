@@ -5,7 +5,8 @@
     class="fixed top-0 right-0 h-full w-full max-w-md bg-mil-dark border-l border-mil-border z-50 transform translate-x-full transition-transform duration-300">
     <div class="h-full flex flex-col">
         <div class="flex items-center justify-between p-6 border-b border-mil-border">
-            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ADD SERVICE</h2>
+            <h2 id="edit-panel-title" class="text-xs font-mono font-bold uppercase tracking-widest text-mil-muted">ADD
+                SERVICE</h2>
             <button onclick="toggleEditMode()"
                 class="w-8 h-8 border border-mil-border text-mil-muted hover:text-mil-text hover:border-mil-text flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-xs"></i>
@@ -13,13 +14,44 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-6">
+            <!-- Auto Detect Section -->
+            <div id="auto-detect-section" class="mb-8 pb-8 border-b border-mil-border">
+                <button id="auto-detect-btn" onclick="autoDetectApps()"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-3 border border-mil-accent text-mil-accent font-mono font-bold text-xs uppercase tracking-wider hover:bg-mil-accent hover:text-mil-black transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    AUTO-DETECT SERVICES
+                </button>
+
+                <!-- Progress Bar -->
+                <div id="scan-progress" class="hidden mt-3">
+                    <div class="w-full bg-mil-dark h-2 border border-mil-border">
+                        <div id="scan-progress-bar" class="bg-mil-accent h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="scan-status" class="text-[10px] font-mono text-mil-muted mt-1 uppercase tracking-wider">Initializing...</p>
+                </div>
+
+                <div id="auto-detect-preview" class="hidden mt-4">
+                    <h3 class="text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-3">FOUND
+                        SERVICES</h3>
+                    <div id="detected-apps-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button onclick="importSelectedApps()"
+                        class="w-full px-4 py-2 bg-mil-success text-mil-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-mil-success/90 transition-all">
+                        IMPORT SELECTED
+                    </button>
+                </div>
+            </div>
+
             <form id="add-app-form" class="space-y-5" hx-post="/api/apps/add" hx-target="#apps-container"
                 hx-swap="innerHTML">
+                <input type="hidden" name="original_name" id="original-name">
+
                 <div>
                     <label
                         class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Service
                         Name</label>
-                    <input name="name" required placeholder="e.g. Plex, Nextcloud"
+                    <input name="name" id="app-name" required placeholder="e.g. Plex, Nextcloud"
                         class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
                 </div>
 
@@ -28,7 +60,7 @@
                         class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">URL
                         / IP
                         Address</label>
-                    <input name="url" required placeholder="e.g. 192.168.1.100:8080"
+                    <input name="url" id="app-url" required placeholder="e.g. 192.168.1.100:8080"
                         class="w-full px-4 py-3 bg-mil-black border border-mil-border text-mil-text font-mono text-sm placeholder:text-mil-muted/50 focus:border-mil-accent focus:outline-none transition" />
                 </div>
 
@@ -37,7 +69,7 @@
                         class="block text-[10px] font-mono font-bold text-mil-muted uppercase tracking-widest mb-2">Icon</label>
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-14 h-14 bg-mil-black border border-mil-border flex items-center justify-center">
-                            <img id="icon-preview" src="{{ default_icon }}" alt="icon" class="w-10 h-10 object-contain">
+                            <img id="icon-preview" src="{{ default_icon }}" data-default-icon="{{ default_icon }}" alt="icon" class="w-10 h-10 object-contain">
                         </div>
                         <input type="hidden" id="icon-url" name="icon" value="{{ default_icon }}">
                         <input id="icon-search" name="q" placeholder="Search icons..."
@@ -50,14 +82,24 @@
 
                 <div id="form-message"></div>
 
-                <button type="submit"
+                <button type="submit" id="submit-btn"
                     class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-mil-accent text-mil-black font-mono font-bold text-sm uppercase tracking-wider hover:bg-mil-accentDim transition-all">
                     <i class="fa-solid fa-plus text-xs"></i>
-                    ADD TO DASHBOARD
+                    <span id="submit-text">ADD TO DASHBOARD</span>
                     <span id="form-spinner" class="htmx-indicator"><i
                             class="fa-solid fa-spinner animate-spin ml-2"></i></span>
                 </button>
             </form>
+        </div>
+
+        <!-- Footer with danger zone -->
+        <div id="panel-footer" class="p-4 border-t border-mil-border">
+            <button hx-delete="/api/apps" hx-target="#apps-container" hx-swap="innerHTML"
+                hx-confirm="Are you sure you want to delete ALL services? This cannot be undone."
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 border border-mil-error/20 text-mil-error/50 font-mono text-[10px] uppercase tracking-wider hover:border-mil-error hover:text-mil-error hover:bg-mil-error/10 transition-all">
+                <i class="fa-solid fa-trash-can"></i>
+                CLEAR ALL SERVICES
+            </button>
         </div>
     </div>
 </div>
