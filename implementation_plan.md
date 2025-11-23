@@ -62,33 +62,23 @@ Implement a "Smart Auto-Detect" feature for apps that scans local Docker contain
 *   Add `openEditApp(name)`: Populate form.
 *   Add `autoDetectApps()`: Handle the fetch, preview rendering, and import flow.
 
-### Fixes & Improvements
+### Audiobookshelf UI Rework
 
-#### [FIX] [static/js/dashboard/ui.js](file:///Users/chris/homelab-dashboard/static/js/dashboard/ui.js)
-*   **Refactor Edit Mode to HTMX**:
-    *   Instead of manual `fetch` and `onsubmit`, use HTMX for editing.
-    *   `openEditApp`:
-        *   `form.setAttribute('hx-put', '/api/apps/' + name)`
-        *   `form.removeAttribute('hx-post')`
-        *   `form.setAttribute('hx-target', '#apps-container')`
-        *   `htmx.process(form)`
-    *   Add `htmx:afterOnLoad` listener to form to close panel on success.
-    *   This ensures `hx-target` is always respected and prevents the form from being replaced by the grid.
+#### [MODIFY] [homelab/integrations/audiobookshelf.py](file:///Users/chris/homelab-dashboard/homelab/integrations/audiobookshelf.py)
+*   Increase `limit` in `items_resp` from 5 to 10 or 15 to populate the horizontal scroll.
 
-#### [FIX] [homelab/docker_utils.py](file:///Users/chris/homelab-dashboard/homelab/docker_utils.py)
-*   **Fix Icon 404s**:
-    *   Stop guessing `icon` from Docker image name.
-    *   Only use `homelab.icon` label.
-    *   If no label, leave icon empty (frontend will show default).
-    *   This prevents the browser from trying to load `http://host/linuxserver/plex` etc.
+#### [MODIFY] [templates/partials/widget_audiobookshelf.html](file:///Users/chris/homelab-dashboard/templates/partials/widget_audiobookshelf.html)
+*   **Layout**: Change from vertical list to horizontal scroll (`flex-row`, `overflow-x-auto`).
+*   **Card Style**:
+    *   Show larger covers (e.g., `w-24 h-36`).
+    *   Overlay title/author on hover or show below.
+    *   Use `snap-x` for smooth scrolling.
+    *   Hide scrollbar but allow scrolling.
 
 ## Verification Plan
 ### Manual Verification
-1.  **Edit App**:
-    *   Click "Edit". Verify form populates.
-    *   Click "Save". Verify panel closes and grid updates.
-    *   Click "Edit" *again*. Verify form populates correctly (no "all apps" issue).
-2.  **Auto-Detect**:
-    *   Run scan.
-    *   Verify console does NOT show 404 errors for icons.
-    *   Verify apps without explicit icon labels show the default icon.
+1.  **Audiobookshelf Widget**:
+    *   Verify books appear in a horizontal row.
+    *   Verify scrolling works (drag or trackpad).
+    *   Verify covers load correctly.
+    *   Verify hover effects (if added).

@@ -45,7 +45,7 @@ def get_audiobookshelf_stats(config_override=None) -> Optional[Dict[str, Any]]:
             items_resp = requests.get(
                 f"{base_url}/api/libraries/{lib_id}/items",
                 headers=headers,
-                params={'sort': 'addedAt', 'desc': 1, 'limit': 5, 'minified': 1},
+                params={'sort': 'addedAt', 'desc': 1, 'limit': 15, 'minified': 1},
                 timeout=5
             )
             if items_resp.status_code == 200:

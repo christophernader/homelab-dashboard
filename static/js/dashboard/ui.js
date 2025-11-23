@@ -574,3 +574,69 @@ if (window.locationSettings && window.locationSettings.useAuto && navigator.geol
     console.log('Using manual location settings');
 }
 
+// Initialize Audiobook Marquee
+initAudiobookMarquee();
+});
+
+// Audiobook Marquee Logic
+function initAudiobookMarquee() {
+    const container = document.getElementById('audiobook-scroll-container');
+    if (!container || container.dataset.marqueeInitialized) return;
+    container.dataset.marqueeInitialized = 'true';
+
+    let scrollPos = 0;
+    let speed = 0.5; // Base speed (pixels per frame)
+    let currentSpeed = 0.5;
+    let isHovered = false;
+    let lastTime = performance.now();
+    let animationId;
+
+    function animate(time) {
+        if (!document.body.contains(container)) {
+            cancelAnimationFrame(animationId);
+            return;
+        }
+
+        const dt = time - lastTime;
+        lastTime = time;
+
+        // Target speed logic: 0 if hovered, base speed otherwise
+        const targetSpeed = isHovered ? 0 : speed;
+
+        // Smoothly interpolate current speed to target speed
+        // Factor 0.05 gives a nice "slowly stop" feel
+        currentSpeed += (targetSpeed - currentSpeed) * 0.05;
+
+        // Only scroll if speed is significant
+        if (Math.abs(currentSpeed) > 0.01) {
+            // Normalize speed by delta time (target 60fps ~ 16.67ms)
+            scrollPos += currentSpeed * (dt / 16.67);
+
+            // Seamless loop:
+            // We assume content is duplicated (2 sets).
+            // Reset when we've scrolled past half the total width.
+            // Note: scrollWidth includes the overflowed content.
+            const halfWidth = container.scrollWidth / 2;
+
+            if (scrollPos >= halfWidth) {
+                scrollPos -= halfWidth;
+            }
+
+            container.scrollLeft = scrollPos;
+        }
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+    container.addEventListener('mouseenter', () => isHovered = true);
+    container.addEventListener('mouseleave', () => isHovered = false);
+
+    animationId = requestAnimationFrame(animate);
+}
+
+// Re-init marquee after HTMX swaps (e.g. widget refresh)
+document.body.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail.target && e.detail.target.querySelector('#audiobook-scroll-container')) {
+        initAudiobookMarquee();
+    }
+});

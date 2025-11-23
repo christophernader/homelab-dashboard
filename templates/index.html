@@ -119,9 +119,9 @@
         </div>
         {% endif %}
         {% if integrations and integrations.audiobookshelf and integrations.audiobookshelf.enabled %}
-        <div hx-get="/api/widgets/audiobookshelf" hx-trigger="load, every 300s" hx-swap="innerHTML"
-          data-animate="scale">
-          <div class="h-48 bg-mil-card border border-mil-border animate-pulse"></div>
+        <div class="md:col-span-2 lg:col-span-3 h-64" hx-get="/api/widgets/audiobookshelf" hx-trigger="load, every 300s"
+          hx-swap="innerHTML" data-animate="scale">
+          <div class="h-full bg-mil-card border border-mil-border animate-pulse"></div>
         </div>
         {% endif %}
       </div>

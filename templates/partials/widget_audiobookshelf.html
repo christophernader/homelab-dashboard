@@ -1,5 +1,5 @@
 <div class="h-full flex flex-col">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-book-open text-mil-accent text-xs"></i>
             <h3 class="text-xs font-mono font-bold text-mil-muted uppercase tracking-wider">AUDIOBOOKSHELF</h3>
@@ -10,43 +10,48 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+    <div class="flex-1 min-h-0 relative group/container">
         {% if abs.status == 'error' %}
         <div class="h-full flex flex-col items-center justify-center text-mil-error gap-2 text-center px-4">
             <i class="fa-solid fa-triangle-exclamation text-xl"></i>
             <span class="text-[10px] font-mono uppercase">{{ abs.error }}</span>
         </div>
         {% else %}
-        {% for book in abs.recent_books %}
-        <div class="flex gap-3 group">
-            <div class="w-10 h-14 bg-mil-dark border border-mil-border flex-shrink-0 overflow-hidden relative">
+
+        <!-- Horizontal Scroll Container -->
+        <div id="audiobook-scroll-container"
+            class="absolute inset-0 flex gap-3 overflow-x-hidden overflow-y-hidden pb-2 custom-scrollbar">
+            {% for i in range(2) %}
+            {% for book in abs.recent_books %}
+            <div
+                class="relative flex-shrink-0 w-24 h-full bg-mil-dark border border-mil-border group cursor-pointer transition-all hover:border-mil-accent">
                 {% if book.cover %}
-                <img src="{{ book.cover }}" alt="cover"
+                <img src="{{ book.cover }}" alt="cover" loading="lazy"
                     class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-mil-muted">
-                    <i class="fa-solid fa-book text-xs"></i>
+                    <i class="fa-solid fa-book text-2xl"></i>
                 </div>
                 {% endif %}
-            </div>
-            <div class="flex-1 min-w-0 flex flex-col justify-center">
-                <h4 class="text-xs font-mono text-mil-text truncate group-hover:text-mil-accent transition-colors"
-                    title="{{ book.title }}">
-                    {{ book.title }}
-                </h4>
-                <p class="text-[10px] text-mil-muted truncate">{{ book.author }}</p>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[9px] font-mono text-mil-muted/60 uppercase">ADDED {{ book.added_at | int |
-                        timestamp_to_time }}</span>
+
+                <!-- Hover Overlay -->
+                <div
+                    class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                    <h4 class="text-[10px] font-mono font-bold text-mil-text leading-tight mb-1 line-clamp-3">{{
+                        book.title }}</h4>
+                    <p class="text-[9px] font-mono text-mil-muted line-clamp-1">{{ book.author }}</p>
                 </div>
             </div>
+            {% endfor %}
+            {% endfor %}
+
+            {% if not abs.recent_books %}
+            <div class="w-full h-full flex flex-col items-center justify-center text-mil-muted/50 gap-2">
+                <i class="fa-solid fa-book-open text-xl"></i>
+                <span class="text-[10px] font-mono uppercase">NO BOOKS FOUND</span>
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="h-full flex flex-col items-center justify-center text-mil-muted/50 gap-2">
-            <i class="fa-solid fa-book-open text-xl"></i>
-            <span class="text-[10px] font-mono uppercase">NO BOOKS FOUND</span>
-        </div>
-        {% endfor %}
         {% endif %}
     </div>
 </div>
