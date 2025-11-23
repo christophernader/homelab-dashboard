@@ -1,46 +1,81 @@
 <!-- Loading Screen -->
-<div id="loading-screen" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col">
+<div id="loading-screen" class="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden">
     <!-- Three.js Canvas Container -->
-    <div id="terrain-container" class="absolute inset-0"></div>
+    <div id="terrain-container" class="absolute inset-0 z-0"></div>
 
-    <!-- Pinout Labels Container -->
-    <div id="pinout-labels" class="absolute inset-0 z-[5] pointer-events-none"></div>
+    <!-- Scanline Overlay -->
+    <div class="absolute inset-0 z-[5] pointer-events-none bg-scanline opacity-10"></div>
 
-    <!-- Minimal HUD Overlay -->
-    <div class="relative z-10 flex flex-col h-full pointer-events-none">
-        <!-- Top Left - System Status -->
-        <div class="absolute top-6 left-6">
-            <div class="flex items-center gap-2 mb-1">
-                <div class="w-1.5 h-1.5 bg-[#f97316] animate-pulse"></div>
-                <span class="text-[9px] font-mono text-[#f97316] uppercase tracking-[0.2em]">SYSTEM SCAN</span>
-            </div>
-            <div class="text-[9px] font-mono text-[#444]" id="boot-time">00:00:00</div>
-        </div>
+    <!-- HUD Overlay -->
+    <div class="relative z-10 flex flex-col h-full p-8 pointer-events-none justify-between">
 
-        <!-- Top Right - Version -->
-        <div class="absolute top-6 right-6 text-right">
-            <div class="text-[9px] font-mono text-[#333] uppercase tracking-wider">HOMELAB</div>
-            <div class="text-[9px] font-mono text-[#f97316]/60">v2.1</div>
-        </div>
-
-        <!-- Bottom Progress Bar - Full Width -->
-        <div class="absolute bottom-0 left-0 right-0 p-6">
-            <div class="max-w-md mx-auto">
-                <div class="flex justify-between mb-2">
-                    <span class="text-[9px] font-mono text-[#444] uppercase tracking-wider"
-                        id="load-status">INITIALIZING...</span>
-                    <span class="text-[9px] font-mono text-[#f97316]" id="load-percent">0%</span>
+        <!-- Top Bar -->
+        <div class="flex justify-between items-start">
+            <!-- Top Left -->
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-mil-accent animate-pulse"></div>
+                    <h1 class="text-xs font-mono font-bold text-mil-accent tracking-[0.2em]">
+                        SYSTEM // <span id="typewriter-text">INITIALIZING</span><span class="animate-blink">_</span>
+                    </h1>
                 </div>
-                <div class="h-[1px] bg-[#222] overflow-hidden">
-                    <div id="load-bar" class="h-full bg-[#f97316] transition-all duration-100" style="width: 0%"></div>
+                <div class="text-[10px] font-mono text-mil-muted uppercase tracking-wider pl-4">
+                    TACTICAL DATA CORE v3.0
                 </div>
             </div>
+
+            <!-- Top Right -->
+            <div class="text-right">
+                <div
+                    class="text-[10px] font-mono text-mil-accent/80 uppercase tracking-widest border border-mil-accent/30 px-2 py-1 bg-mil-accent/5">
+                    SECURE_CONN: ESTABLISHED
+                </div>
+                <div class="text-[9px] font-mono text-mil-muted mt-1">
+                    LATENCY: <span class="text-mil-success">12ms</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Corner brackets - subtle -->
-        <div class="absolute top-4 left-4 w-6 h-6 border-l border-t border-[#f97316]/20"></div>
-        <div class="absolute top-4 right-4 w-6 h-6 border-r border-t border-[#f97316]/20"></div>
-        <div class="absolute bottom-4 left-4 w-6 h-6 border-l border-b border-[#f97316]/20"></div>
-        <div class="absolute bottom-4 right-4 w-6 h-6 border-r border-b border-[#f97316]/20"></div>
+        <!-- Center (Empty for 3D) -->
+        <div class="flex-1"></div>
+
+        <!-- Bottom Bar -->
+        <div class="flex justify-between items-end gap-8">
+            <!-- Bottom Left: System Log -->
+            <div
+                class="w-64 h-24 border-l-2 border-mil-accent/30 pl-4 flex flex-col justify-end overflow-hidden relative">
+                <div class="absolute top-0 left-0 text-[9px] font-mono text-mil-muted uppercase tracking-widest">SYSTEM
+                    LOG</div>
+                <div id="system-log" class="text-[10px] font-mono text-mil-accent/80 space-y-1">
+                    <div>> MOUNTING VOLUMES...</div>
+                    <div>> VERIFYING INTEGRITY...</div>
+                    <div>> LOADING MODULES...</div>
+                </div>
+            </div>
+
+            <!-- Bottom Right: Progress -->
+            <div class="w-64">
+                <div class="flex justify-between mb-2 items-end">
+                    <span class="text-[10px] font-mono text-mil-muted uppercase tracking-wider" id="load-status">LOADING
+                        ASSETS</span>
+                    <span class="text-lg font-mono font-bold text-mil-accent" id="load-percent">0%</span>
+                </div>
+                <div class="h-1 bg-mil-dark border border-mil-accent/30 overflow-hidden relative">
+                    <div id="load-bar"
+                        class="h-full bg-mil-accent shadow-[0_0_10px_rgba(249,115,22,0.5)] transition-all duration-100"
+                        style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-1">
+                    <span class="text-[9px] font-mono text-mil-muted">MEM: 14.2GB</span>
+                    <span class="text-[9px] font-mono text-mil-muted">CPU: 12%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Corner Brackets -->
+        <div class="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-mil-accent/50"></div>
+        <div class="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-mil-accent/50"></div>
+        <div class="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-mil-accent/50"></div>
+        <div class="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-mil-accent/50"></div>
     </div>
 </div>

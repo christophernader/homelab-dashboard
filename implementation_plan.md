@@ -62,32 +62,37 @@ Implement a "Smart Auto-Detect" feature for apps that scans local Docker contain
 *   Add `openEditApp(name)`: Populate form.
 *   Add `autoDetectApps()`: Handle the fetch, preview rendering, and import flow.
 
-### Loading Screen Rework (SentriX Inspired)
+### Loading Screen Rework: "Tactical Data Core"
 
 #### [MODIFY] [templates/partials/loading.html](file:///Users/chris/homelab-dashboard/templates/partials/loading.html)
-*   **Layout**: Switch to a HUD-style overlay.
-    *   **Top Left**: Title "HOMELAB DASHBOARD // INITIALIZING".
-    *   **Center**: 3D Canvas (Full screen).
-    *   **Bottom Left**: "SYSTEM METRICS" panel (simulated stats: CPU, RAM, Network).
-    *   **Bottom Right**: "STATUS" panel (Circular gauge or progress bar).
-    *   **Styling**: Use `border-mil-border`, `bg-mil-card/80`, `backdrop-blur`.
+*   **Layout**: Professional HUD overlay.
+    *   **Frame**: Corner brackets (`border-l-2 border-t-2`, etc.) to frame the view.
+    *   **Top Bar**:
+        *   Left: `SYSTEM // INITIALIZING` (Typewriter effect).
+        *   Right: `SECURE_CONN: ESTABLISHED`.
+    *   **Center**: 3D Canvas (Abstract Data Core).
+    *   **Bottom Bar**:
+        *   Left: **System Log** (Scrolling text: "Loading modules...", "Verifying config...").
+        *   Right: **Load Status** (Precise percentage + Progress Bar).
+    *   **Styling**: Minimalist `font-mono`, `text-mil-accent`, `bg-black`.
 
 #### [MODIFY] [static/js/loading/viz_terrain.js](file:///Users/chris/homelab-dashboard/static/js/loading/viz_terrain.js)
 *   **Scene**:
-    *   Replace terrain with a "Hero" object (e.g., a rotating wireframe sphere or complex geometry representing the "Core").
-    *   Add a dynamic grid floor (moving lines).
-    *   Add "floating" data points or lines connecting to the core.
-*   **Camera**: Cinematic rotation around the center object.
+    *   **Object**: Rotating Wireframe Icosahedron ("The Core").
+    *   **Inner**: Solid sphere with "wireframe" material or glowing edges.
+    *   **Floor**: Faint grid lines fading into distance.
+    *   **Animation**: Smooth rotation + slight vertical float.
+*   **Lighting**: Dramatic side lighting to highlight edges.
 
 #### [MODIFY] [static/css/animations.css](file:///Users/chris/homelab-dashboard/static/css/animations.css)
-*   Add "scanline" overlay effect.
-*   Add "glitch" text effect for the header.
+*   **Scanline**: Subtle CRT scanline overlay (`pointer-events-none`).
+*   **Blink**: Standard blinking cursor for text.
 
 ## Verification Plan
 ### Manual Verification
 1.  **Loading Screen**:
     *   Refresh page.
-    *   Verify new HUD layout appears.
-    *   Verify 3D scene is updated (Hero object).
-    *   Verify animations (scanlines, text glitch).
-    *   Verify transition to dashboard is smooth.
+    *   Verify HUD layout (corners, text).
+    *   Verify 3D Core renders and rotates.
+    *   Verify log text updates.
+    *   Verify smooth transition to dashboard.
