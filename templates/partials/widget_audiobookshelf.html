@@ -18,40 +18,57 @@
         </div>
         {% else %}
 
-        <!-- Horizontal Scroll Container -->
-        <div id="audiobook-scroll-container"
-            class="absolute inset-0 flex gap-3 overflow-x-hidden overflow-y-hidden pb-2 custom-scrollbar">
-            {% for i in range(2) %}
-            {% for book in abs.recent_books %}
-            <div
-                class="relative flex-shrink-0 w-40 h-full bg-mil-dark border border-mil-border group cursor-pointer transition-all hover:border-mil-accent">
-                {% if book.cover %}
-                <img src="{{ book.cover }}" alt="cover" loading="lazy"
-                    class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center text-mil-muted">
-                    <i class="fa-solid fa-book text-2xl"></i>
-                </div>
-                {% endif %}
-
-                <!-- Hover Overlay -->
+        <!-- Horizontal Scroll Container with CSS Animation -->
+        <div class="absolute inset-0 overflow-hidden pb-2">
+            <div id="audiobook-scroll-container" class="flex gap-3 h-full"
+                style="animation: marquee 30s linear infinite; will-change: transform;"
+                onmouseenter="this.style.animationPlayState='paused'"
+                onmouseleave="this.style.animationPlayState='running'">
+                {% for i in range(4) %}
+                {% for book in abs.recent_books %}
                 <div
-                    class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                    <h4 class="text-[10px] font-mono font-bold text-mil-text leading-tight mb-1 line-clamp-3">{{
-                        book.title }}</h4>
-                    <p class="text-[9px] font-mono text-mil-muted line-clamp-1">{{ book.author }}</p>
-                </div>
-            </div>
-            {% endfor %}
-            {% endfor %}
+                    class="relative flex-shrink-0 w-40 h-full bg-mil-black border border-mil-border group cursor-pointer transition-all hover:border-mil-accent overflow-hidden">
+                    {% if book.cover %}
+                    <img src="{{ book.cover }}" alt="cover" loading="lazy"
+                        class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                    {% else %}
+                    <div class="w-32 h-full flex items-center justify-center text-mil-muted bg-mil-dark">
+                        <i class="fa-solid fa-book text-2xl"></i>
+                    </div>
+                    {% endif %}
 
-            {% if not abs.recent_books %}
-            <div class="w-full h-full flex flex-col items-center justify-center text-mil-muted/50 gap-2">
-                <i class="fa-solid fa-book-open text-xl"></i>
-                <span class="text-[10px] font-mono uppercase">NO BOOKS FOUND</span>
+                    <!-- Hover Overlay -->
+                    <div
+                        class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                        <h4 class="text-[10px] font-mono font-bold text-mil-text leading-tight mb-1 line-clamp-3">{{
+                            book.title }}</h4>
+                        <p class="text-[9px] font-mono text-mil-muted line-clamp-1">{{ book.author }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endfor %}
             </div>
-            {% endif %}
+        </div>
+
+        <style>
+            @keyframes marquee {
+                0% {
+                    transform: translateX(0);
+                }
+
+                100% {
+                    transform: translateX(-50%);
+                }
+            }
+        </style>
+
+        {% if not abs.recent_books %}
+        <div class="w-full h-full flex flex-col items-center justify-center text-mil-muted/50 gap-2">
+            <i class="fa-solid fa-book-open text-xl"></i>
+            <span class="text-[10px] font-mono uppercase">NO BOOKS FOUND</span>
         </div>
         {% endif %}
     </div>
+    {% endif %}
+</div>
 </div>

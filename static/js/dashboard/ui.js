@@ -574,19 +574,30 @@ if (window.locationSettings && window.locationSettings.useAuto && navigator.geol
     console.log('Using manual location settings');
 }
 
-// Initialize Audiobook Marquee
-initAudiobookMarquee();
-});
-
 // Audiobook Marquee Logic
 function initAudiobookMarquee() {
     const container = document.getElementById('audiobook-scroll-container');
-    if (!container || container.dataset.marqueeInitialized) return;
+
+    if (!container) {
+        console.log('Audiobook container not found');
+        return;
+    }
+
+    if (container.dataset.marqueeInitialized) {
+        console.log('Audiobook marquee already initialized');
+        return;
+    }
+
+    console.log('Initializing audiobook marquee...', {
+        scrollWidth: container.scrollWidth,
+        clientWidth: container.clientWidth
+    });
+
     container.dataset.marqueeInitialized = 'true';
 
     let scrollPos = 0;
-    let speed = 0.8; // Increased base speed
-    let currentSpeed = 0.8;
+    let speed = 1.0; // Increased speed for more visible movement
+    let currentSpeed = 1.0;
     let isHovered = false;
     let lastTime = performance.now();
     let animationId;
@@ -608,18 +619,13 @@ function initAudiobookMarquee() {
 
         // Only scroll if speed is significant
         if (Math.abs(currentSpeed) > 0.01) {
-            // Normalize speed by delta time (target 60fps ~ 16.67ms)
-            scrollPos += currentSpeed * (dt / 16.67);
+            scrollPos += currentSpeed;
 
-            // Seamless loop:
-            // We assume content is duplicated (2 sets).
-            // Reset when we've scrolled past half the total width.
-            // Note: scrollWidth includes the overflowed content.
+            // Seamless loop - reset when we've scrolled past half
             const halfWidth = container.scrollWidth / 2;
 
-            // Reset when we've scrolled past half the total width
             if (scrollPos >= halfWidth) {
-                scrollPos -= halfWidth;
+                scrollPos = 0;
             }
 
             container.scrollLeft = scrollPos;
@@ -628,28 +634,43 @@ function initAudiobookMarquee() {
         animationId = requestAnimationFrame(animate);
     }
 
-    container.addEventListener('mouseenter', () => isHovered = true);
-    container.addEventListener('mouseleave', () => isHovered = false);
+    container.addEventListener('mouseenter', () => {
+        console.log('Audiobook hover: pausing');
+        isHovered = true;
+    });
+
+    container.addEventListener('mouseleave', () => {
+        console.log('Audiobook hover: resuming');
+        isHovered = false;
+    });
 
     // Start animation
+    console.log('Starting audiobook animation');
     animationId = requestAnimationFrame(animate);
 }
 
-// Robust initialization
-['DOMContentLoaded', 'htmx:afterSwap', 'htmx:afterSettle'].forEach(event => {
-    document.body.addEventListener(event, (e) => {
-        // Check if the target contains the container or is the container
-        const target = e.detail?.target || document;
-        if (target.querySelector && target.querySelector('#audiobook-scroll-container')) {
-            initAudiobookMarquee();
-        }
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => initAudiobookMarquee(), 500);
     });
+} else {
+    // DOM already loaded
+    setTimeout(() => initAudiobookMarquee(), 500);
+}
+
+// Re-init on HTMX swaps
+document.body.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail.target && e.detail.target.querySelector('#audiobook-scroll-container')) {
+        setTimeout(() => initAudiobookMarquee(), 500);
+    }
 });
 
-// Fallback check for initial load
+// Fallback check
 setInterval(() => {
     const container = document.getElementById('audiobook-scroll-container');
     if (container && !container.dataset.marqueeInitialized) {
+        console.log('Fallback: Initializing audiobook marquee');
         initAudiobookMarquee();
     }
-}, 1000);
+}, 2000);
