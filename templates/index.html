@@ -186,7 +186,12 @@
     units: { { (location.units | default ('imperial')) | tojson } }
     };
   </script>
-  <script src="{{ url_for('static', filename='js/dashboard/ui.js') }}?v=2"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/utils.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/theme.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/drag_drop.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/edit_panel.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/apps.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/dashboard/widgets.js') }}"></script>
   <script src="{{ url_for('static', filename='js/dashboard/terminal.js') }}"></script>
 </body>
 

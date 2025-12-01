@@ -7,7 +7,7 @@ A Flask-based homelab dashboard with a military/tactical aesthetic. Features rea
 ## Tech Stack
 
 - **Backend**: Python 3, Flask, Flask-Sock (WebSocket)
-- **Frontend**: Tailwind CSS (via CDN), HTMX, Three.js (loading screen)
+- **Frontend**: Tailwind CSS (via CDN), HTMX, Three.js (loading screen), ES Modules
 - **Terminal**: xterm.js with WebSocket backend
 - **Deployment**: Docker container on Debian server at `chris@192.168.50.10`, port 5050
 
@@ -59,7 +59,8 @@ sshpass -p '951357' ssh -o StrictHostKeyChecking=no chris@192.168.50.10 "docker 
 homelab-dashboard/
 ├── app.py                    # Minimal entry point (~50 lines) - creates app, registers blueprints
 ├── homelab/
-│   ├── settings.py           # Settings management, themes (THEMES dict), defaults
+│   ├── settings.py           # Settings management
+│   ├── themes.py             # Theme definitions (THEMES dict)
 │   ├── docker_utils.py       # Docker container fetching
 │   ├── system_stats.py       # System stats (CPU, RAM, etc)
 │   ├── app_store.py          # Service/app management
@@ -88,6 +89,7 @@ homelab-dashboard/
 │   │   └── widgets.py        # Widget endpoints (/api/widgets/*)
 │   └── services/             # Business logic services
 │       ├── __init__.py       # Exports services
+│       ├── status.py         # URL status checking service
 │       └── terminal.py       # WebSocket terminal PTY handler
 ├── templates/
 │   ├── index.html            # Main dashboard page
@@ -112,7 +114,12 @@ homelab-dashboard/
 │       │   ├── viz_server.js # Server visualization
 │       │   ├── viz_terrain.js # Terrain visualization
 │       └── dashboard/        # Dashboard modules
-│           ├── ui.js         # UI logic (theme, drag-drop, location)
+│           ├── utils.js      # Shared utilities (toasts)
+│           ├── theme.js      # Theme management
+│           ├── drag_drop.js  # Drag and drop logic
+│           ├── edit_panel.js # Edit panel logic
+│           ├── apps.js       # App management
+│           ├── widgets.js    # Widget-specific logic
 │           └── terminal.js   # Terminal logic
 └── data/
     ├── settings.json         # Persisted settings (Docker volume)
@@ -122,9 +129,9 @@ homelab-dashboard/
 ### Architecture Notes
 
 - **Blueprints**: Routes are organized into Flask Blueprints for better maintainability
-- **Services**: Business logic (like terminal handling) is extracted into services
+- **Services**: Business logic (like terminal handling and status checking) is extracted into services
 - **Modular Widgets**: Widget logic split into focused modules in `homelab/widgets/`
-- **Frontend Modules**: JavaScript split into modular files in `static/js/`
+- **Frontend Modules**: JavaScript split into modular ES modules in `static/js/dashboard/`
 - **CSS Extraction**: Inline styles moved to external CSS files for browser caching
 - **app.py**: Now a minimal ~50 line file that just creates the app and registers blueprints
 
@@ -134,7 +141,7 @@ homelab-dashboard/
 
 1. **Theme System**
    - 9 themes: military, cyberpunk, matrix, nord, dracula, solarized, monokai, ocean, light
-   - Themes defined in `homelab/settings.py` as `THEMES` dict
+   - Themes defined in `homelab/themes.py`
    - CSS variables: `--mil-black`, `--mil-dark`, `--mil-card`, `--mil-border`, `--mil-text`, `--mil-muted`, `--mil-accent`, `--mil-success`, `--mil-error`
    - Theme selection UI in Settings > Appearance tab
 
@@ -195,6 +202,7 @@ DEFAULT_SETTINGS = {
         "news_ticker_enabled": True,
         "weather_bar_enabled": True,
         "crypto_bar_enabled": True,
+        "refresh_interval": 30,
     },
 }
 ```
@@ -250,6 +258,8 @@ python3 app.py
 ## Recent Changes
 
 - **Major Refactoring (Completed)**:
+  - **Frontend**: Split `static/js/dashboard/ui.js` into modular files (`utils.js`, `theme.js`, `drag_drop.js`, `edit_panel.js`, `apps.js`, `widgets.js`).
+  - **Backend**: Modularized `homelab/settings.py` (moved themes to `homelab/themes.py`) and `homelab/app_store.py` (moved status checking to `homelab/services/status.py`).
   - **Widgets**: Modularized `homelab/widgets.py` into `homelab/widgets/` package with focused modules (weather, news, crypto, etc.).
   - **Loading Screen**: Split `static/js/loading.js` into `core.js`, `viz_server.js`, `viz_terrain.js` in `static/js/loading/`.
   - **Dashboard JS**: Extracted inline JS from `index.html` into `static/js/dashboard/ui.js` and `terminal.js`.

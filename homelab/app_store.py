@@ -30,36 +30,7 @@ def save_apps(apps: List[dict]) -> None:
     APPS_FILE.write_text(json.dumps(apps, indent=2), encoding="utf-8")
 
 
-def normalize_url(url: str) -> str:
-    if not url:
-        return ""
-    if url.startswith(("http://", "https://")):
-        return url
-    return f"http://{url}"
-
-
-def check_url_online(url: str) -> Tuple[bool, int]:
-    """Check if URL is online and return (online, response_time_ms)."""
-    target = normalize_url(url)
-    if not target:
-        return False, 0
-
-    start = time.time()
-    try:
-        resp = requests.head(target, timeout=2, allow_redirects=True, verify=False)
-        elapsed = int((time.time() - start) * 1000)
-        if resp.status_code < 400:
-            return True, elapsed
-    except requests.RequestException:
-        pass
-
-    start = time.time()
-    try:
-        resp = requests.get(target, timeout=3, stream=True, allow_redirects=True, verify=False)
-        elapsed = int((time.time() - start) * 1000)
-        return resp.status_code < 400, elapsed
-    except requests.RequestException:
-        return False, 0
+from homelab.services.status import check_url_online, normalize_url
 
 
 def apps_with_status() -> List[dict]:
