@@ -5,8 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Homelab Dashboard</title>
+
+  <!-- Preconnect to CDNs for speed -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+
+  <!-- Preload critical CSS -->
+  <link rel="preload" href="/static/css/animations.css" as="style">
+  <link rel="preload" href="/static/css/dashboard.css" as="style">
+
+  <!-- Fonts with display=swap for fast text rendering -->
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
@@ -43,17 +53,11 @@
     crossorigin="anonymous" />
   <link rel="stylesheet" href="/static/css/animations.css" />
   <link rel="stylesheet" href="/static/css/dashboard.css" />
-  <!-- Three.js & Loading Screen -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Pass loading screen settings (inline for instant access) -->
   <script>
-    // Pass loading screen settings from server
     window.loadingScreenStyle = '{{ appearance.loading_screen_style | default("server") }}';
     window.showLoadingScreen = {{ 'true' if appearance.show_loading_screen | default (true) else 'false' }};
   </script>
-  <!-- Loading Screen Logic -->
-  <script src="{{ url_for('static', filename='js/loading/viz_terrain.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/loading/viz_server.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/loading/core.js') }}"></script>
 </head>
 
 <body class="min-h-screen bg-mil-black text-mil-text font-sans relative">
@@ -193,6 +197,14 @@
   <script type="module" src="{{ url_for('static', filename='js/dashboard/apps.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/dashboard/widgets.js') }}"></script>
   <script src="{{ url_for('static', filename='js/dashboard/terminal.js') }}"></script>
+
+  <!-- Three.js & Loading (deferred for speed - loads after initial paint) -->
+  {% if appearance.show_loading_screen %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="{{ url_for('static', filename='js/loading/viz_terrain.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/loading/viz_server.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/loading/core.js') }}" defer></script>
+  {% endif %}
 </body>
 
 </html>

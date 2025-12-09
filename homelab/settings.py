@@ -1,6 +1,7 @@
 """Settings management for dashboard configuration."""
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from threading import Lock
@@ -8,6 +9,11 @@ from threading import Lock
 DATA_DIR = Path("data")
 SETTINGS_FILE = DATA_DIR / "settings.json"
 _settings_lock = Lock()
+
+# In-memory cache
+_settings_cache: Optional[Dict[str, Any]] = None
+_cache_timestamp: float = 0
+_cache_ttl: int = 60  # seconds
 
 # Default settings structure
 DEFAULT_SETTINGS = {
@@ -85,24 +91,58 @@ def ensure_settings_file() -> None:
             json.dump(DEFAULT_SETTINGS, f, indent=2)
 
 
-def load_settings() -> Dict[str, Any]:
-    """Load settings from file, merging with defaults."""
+def load_settings(bypass_cache: bool = False) -> Dict[str, Any]:
+    """
+    Load settings from file, merging with defaults.
+
+    Uses an in-memory cache with TTL to avoid disk I/O on every request.
+
+    Args:
+        bypass_cache: If True, force reload from disk (used when saving settings)
+
+    Returns:
+        Complete settings dictionary merged with defaults
+    """
+    global _settings_cache, _cache_timestamp
+
+    # Check cache validity
+    cache_age = time.time() - _cache_timestamp
+    if not bypass_cache and _settings_cache is not None and cache_age < _cache_ttl:
+        return _settings_cache.copy()
+
+    # Cache miss or expired - load from disk
     ensure_settings_file()
-    try:
-        with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-            saved = json.load(f)
-        # Deep merge with defaults to ensure all keys exist
-        return _deep_merge(DEFAULT_SETTINGS, saved)
-    except Exception:
-        return DEFAULT_SETTINGS.copy()
+    with _settings_lock:
+        try:
+            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                saved = json.load(f)
+            # Deep merge with defaults to ensure all keys exist
+            merged = _deep_merge(DEFAULT_SETTINGS, saved)
+
+            # Update cache
+            _settings_cache = merged
+            _cache_timestamp = time.time()
+
+            return merged.copy()
+        except Exception:
+            # On error, cache defaults and return
+            _settings_cache = DEFAULT_SETTINGS.copy()
+            _cache_timestamp = time.time()
+            return DEFAULT_SETTINGS.copy()
 
 
 def save_settings(settings: Dict[str, Any]) -> None:
-    """Save settings to file."""
+    """Save settings to file and invalidate cache."""
+    global _settings_cache, _cache_timestamp
+
     ensure_settings_file()
     with _settings_lock:
         with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=2)
+
+        # Invalidate cache by updating it immediately
+        _settings_cache = _deep_merge(DEFAULT_SETTINGS, settings)
+        _cache_timestamp = time.time()
 
 
 def get_setting(path: str, default: Any = None) -> Any:
@@ -186,6 +226,25 @@ def get_appearance_config() -> Dict[str, Any]:
     return settings.get('appearance', DEFAULT_SETTINGS['appearance'])
 
 
+def invalidate_cache() -> None:
+    """Manually invalidate the settings cache. Useful for testing or external modifications."""
+    global _settings_cache, _cache_timestamp
+    with _settings_lock:
+        _settings_cache = None
+        _cache_timestamp = 0
+
+
+def get_cache_stats() -> Dict[str, Any]:
+    """Get cache statistics for monitoring/debugging."""
+    cache_age = time.time() - _cache_timestamp if _cache_timestamp > 0 else -1
+    return {
+        'cached': _settings_cache is not None,
+        'age_seconds': round(cache_age, 2) if cache_age >= 0 else None,
+        'ttl_seconds': _cache_ttl,
+        'is_valid': cache_age < _cache_ttl if cache_age >= 0 else False,
+    }
+
+
 def _deep_merge(base: Dict, override: Dict) -> Dict:
     """Deep merge two dictionaries, override takes precedence."""
     result = base.copy()
@@ -214,4 +273,6 @@ __all__ = [
     'update_integration',
     'get_dashboard_config',
     'get_appearance_config',
+    'invalidate_cache',
+    'get_cache_stats',
 ]

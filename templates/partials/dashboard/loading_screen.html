@@ -1,4 +1,4 @@
-<!-- Loading Screen -->
+<!-- Loading Screen - Optimized for Speed -->
 <div id="loading-screen" class="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden">
     <!-- Three.js Canvas Container -->
     <div id="terrain-container" class="absolute inset-0 z-0"></div>
@@ -6,8 +6,11 @@
     <!-- Scanline Overlay -->
     <div class="absolute inset-0 z-[5] pointer-events-none bg-scanline opacity-10"></div>
 
+    <!-- Pinout Labels Container (for server viz) -->
+    <div id="pinout-labels" class="absolute inset-0 z-20 pointer-events-none"></div>
+
     <!-- HUD Overlay -->
-    <div class="relative z-10 flex flex-col h-full p-8 pointer-events-none justify-between">
+    <div class="relative z-10 flex flex-col h-full p-6 md:p-8 pointer-events-none justify-between">
 
         <!-- Top Bar -->
         <div class="flex justify-between items-start">
@@ -31,7 +34,7 @@
                     SECURE_CONN: ESTABLISHED
                 </div>
                 <div class="text-[9px] font-mono text-mil-muted mt-1">
-                    LATENCY: <span class="text-mil-success">12ms</span>
+                    BOOT: <span id="boot-time" class="text-mil-success boot-number">00:00:00</span>
                 </div>
             </div>
         </div>
@@ -40,25 +43,26 @@
         <div class="flex-1"></div>
 
         <!-- Bottom Bar -->
-        <div class="flex justify-between items-end gap-8">
+        <div class="flex justify-between items-end gap-4 md:gap-8">
             <!-- Bottom Left: System Log -->
             <div
-                class="w-64 h-24 border-l-2 border-mil-accent/30 pl-4 flex flex-col justify-end overflow-hidden relative">
+                class="w-48 md:w-64 h-20 md:h-24 border-l-2 border-mil-accent/30 pl-3 md:pl-4 flex flex-col justify-end overflow-hidden relative">
                 <div class="absolute top-0 left-0 text-[9px] font-mono text-mil-muted uppercase tracking-widest">SYSTEM
                     LOG</div>
-                <div id="system-log" class="text-[10px] font-mono text-mil-accent/80 space-y-1">
-                    <div>> MOUNTING VOLUMES...</div>
-                    <div>> VERIFYING INTEGRITY...</div>
-                    <div>> LOADING MODULES...</div>
+                <div id="system-log"
+                    class="text-[9px] md:text-[10px] font-mono text-mil-accent/80 space-y-0.5 overflow-hidden">
+                    <div>&gt; MOUNTING VOLUMES...</div>
+                    <div>&gt; VERIFYING INTEGRITY...</div>
+                    <div>&gt; LOADING MODULES...</div>
                 </div>
             </div>
 
             <!-- Bottom Right: Progress -->
-            <div class="w-64">
-                <div class="flex justify-between mb-2 items-end">
-                    <span class="text-[10px] font-mono text-mil-muted uppercase tracking-wider" id="load-status">LOADING
-                        ASSETS</span>
-                    <span class="text-lg font-mono font-bold text-mil-accent" id="load-percent">0%</span>
+            <div class="w-48 md:w-64">
+                <div class="flex justify-between mb-1.5 md:mb-2 items-end">
+                    <span class="text-[9px] md:text-[10px] font-mono text-mil-muted uppercase tracking-wider"
+                        id="load-status">INITIALIZING</span>
+                    <span class="text-base md:text-lg font-mono font-bold text-mil-accent" id="load-percent">0%</span>
                 </div>
                 <div class="h-1 bg-mil-dark border border-mil-accent/30 overflow-hidden relative">
                     <div id="load-bar"
@@ -66,16 +70,24 @@
                         style="width: 0%"></div>
                 </div>
                 <div class="flex justify-between mt-1">
-                    <span class="text-[9px] font-mono text-mil-muted">MEM: 14.2GB</span>
-                    <span class="text-[9px] font-mono text-mil-muted">CPU: 12%</span>
+                    <span class="text-[8px] md:text-[9px] font-mono text-mil-muted">PARALLEL FETCH</span>
+                    <span class="text-[8px] md:text-[9px] font-mono text-mil-success">ACTIVE</span>
                 </div>
             </div>
         </div>
 
         <!-- Corner Brackets -->
-        <div class="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-mil-accent/50"></div>
-        <div class="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-mil-accent/50"></div>
-        <div class="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-mil-accent/50"></div>
-        <div class="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-mil-accent/50"></div>
+        <div
+            class="corner-bracket absolute top-6 md:top-8 left-6 md:left-8 w-12 md:w-16 h-12 md:h-16 border-l-2 border-t-2 border-mil-accent/50">
+        </div>
+        <div
+            class="corner-bracket absolute top-6 md:top-8 right-6 md:right-8 w-12 md:w-16 h-12 md:h-16 border-r-2 border-t-2 border-mil-accent/50">
+        </div>
+        <div
+            class="corner-bracket absolute bottom-6 md:bottom-8 left-6 md:left-8 w-12 md:w-16 h-12 md:h-16 border-l-2 border-b-2 border-mil-accent/50">
+        </div>
+        <div
+            class="corner-bracket absolute bottom-6 md:bottom-8 right-6 md:right-8 w-12 md:w-16 h-12 md:h-16 border-r-2 border-b-2 border-mil-accent/50">
+        </div>
     </div>
 </div>

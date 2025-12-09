@@ -3,6 +3,9 @@ import platform
 import socket
 import os
 from datetime import datetime
+from homelab.utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def system_stats() -> dict:
@@ -35,7 +38,8 @@ def system_info() -> dict:
         s.connect(("8.8.8.8", 80))
         ip_address = s.getsockname()[0]
         s.close()
-    except:
+    except (OSError, socket.error) as e:
+        logger.debug(f"Failed to get IP address: {e}, using localhost")
         ip_address = "127.0.0.1"
 
     # Format uptime

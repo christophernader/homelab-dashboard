@@ -3,6 +3,10 @@
 import requests
 from typing import Optional
 from ..settings import get_integration_config
+from ..utils.logging_config import get_logger, log_integration_error
+from ..utils.http import get_session, VERIFY_SSL
+
+logger = get_logger(__name__)
 
 
 def get_pihole_stats(config_override=None) -> Optional[dict]:
@@ -38,8 +42,7 @@ def get_pihole_stats(config_override=None) -> Optional[dict]:
 
 def _try_pihole_v6(base_url: str, password: str) -> Optional[dict]:
     """Try Pi-hole v6 REST API with session authentication."""
-    session = requests.Session()
-    session.verify = False
+    session = get_session()
 
     try:
         # Authenticate to get session
@@ -98,8 +101,8 @@ def _try_pihole_v6(base_url: str, password: str) -> Optional[dict]:
         # Logout to free session seat
         try:
             session.delete(f"{base_url}/api/auth", headers=auth_headers, timeout=2)
-        except:
-            pass
+        except requests.RequestException as e:
+            logger.debug(f"Failed to logout Pi-hole session (non-critical): {e}")
 
         queries = data.get('queries', {})
 
@@ -131,7 +134,7 @@ def _try_pihole_v5(base_url: str, api_key: str) -> Optional[dict]:
         if api_key:
             params['auth'] = api_key
 
-        resp = requests.get(api_url, params=params, timeout=5, verify=False)
+        resp = requests.get(api_url, params=params, timeout=5, verify=VERIFY_SSL)
         resp.raise_for_status()
         data = resp.json()
 

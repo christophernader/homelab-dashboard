@@ -12,6 +12,13 @@ requests.packages.urllib3.disable_warnings()
 
 from flask import Flask
 from flask_sock import Sock
+from pathlib import Path
+
+# Set up logging first
+from homelab.utils.logging_config import setup_logging
+log_level = os.environ.get('LOG_LEVEL', 'INFO')
+log_file = Path('data') / 'dashboard.log' if os.environ.get('LOG_TO_FILE') == 'true' else None
+setup_logging(level=log_level, log_file=log_file)
 
 # Import blueprints
 from homelab.routes import main_bp, api_bp, settings_bp, widgets_bp

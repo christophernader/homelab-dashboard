@@ -3,6 +3,10 @@
 import requests
 from typing import Optional
 from ..settings import get_integration_config
+from ..utils.logging_config import get_logger
+from ..utils.http import VERIFY_SSL
+
+logger = get_logger(__name__)
 
 
 def get_proxmox_stats(config_override=None) -> Optional[dict]:
@@ -40,7 +44,7 @@ def get_proxmox_stats(config_override=None) -> Optional[dict]:
             f"{base_url}/api2/json/nodes",
             headers=headers,
             timeout=10,
-            verify=False
+            verify=VERIFY_SSL
         )
         nodes_resp.raise_for_status()
         nodes = nodes_resp.json().get('data', [])
@@ -64,14 +68,14 @@ def get_proxmox_stats(config_override=None) -> Optional[dict]:
                     f"{base_url}/api2/json/nodes/{node_name}/qemu",
                     headers=headers,
                     timeout=5,
-                    verify=False
+                    verify=VERIFY_SSL
                 )
                 if vms_resp.ok:
                     vms = vms_resp.json().get('data', [])
                     total_vms += len(vms)
                     running_vms += sum(1 for vm in vms if vm.get('status') == 'running')
-            except:
-                pass
+            except requests.RequestException as e:
+                logger.debug(f"Failed to fetch VMs for node {node_name}: {e}")
 
             # Get LXC containers on this node
             try:
@@ -79,14 +83,14 @@ def get_proxmox_stats(config_override=None) -> Optional[dict]:
                     f"{base_url}/api2/json/nodes/{node_name}/lxc",
                     headers=headers,
                     timeout=5,
-                    verify=False
+                    verify=VERIFY_SSL
                 )
                 if lxc_resp.ok:
                     lxcs = lxc_resp.json().get('data', [])
                     total_containers += len(lxcs)
                     running_containers += sum(1 for c in lxcs if c.get('status') == 'running')
-            except:
-                pass
+            except requests.RequestException as e:
+                logger.debug(f"Failed to fetch LXC containers for node {node_name}: {e}")
 
             # Node resources
             total_cpu_usage += node.get('cpu', 0) * 100
