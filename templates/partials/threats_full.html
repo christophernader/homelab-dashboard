@@ -5,7 +5,7 @@
     <div class="lg:col-span-1">
       <div class="text-center p-4 border border-mil-border bg-mil-dark/50">
         <div class="flex items-center justify-center gap-2 mb-3">
-          <i class="fa-solid fa-shield-halved text-mil-accent"></i>
+          <i class="fa-solid fa-shield-halved text-mil-accent text-xs"></i>
           <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">THREAT LEVEL</span>
         </div>
         <div class="text-4xl font-mono font-bold tracking-wider mb-2
@@ -43,7 +43,7 @@
       <div class="space-y-2">
         {% for quake in threats.earthquakes[:4] %}
         <a href="{{ quake.url }}" target="_blank" rel="noopener"
-           class="flex items-center gap-3 p-2 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group">
+          class="flex items-center gap-3 p-2 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group">
           <span class="flex-shrink-0 w-10 h-8 flex items-center justify-center text-sm font-mono font-bold
             {% if quake.magnitude >= 6.0 %}bg-red-500/20 text-red-400 border border-red-500/30
             {% elif quake.magnitude >= 5.0 %}bg-orange-500/20 text-orange-400 border border-orange-500/30
@@ -51,14 +51,16 @@
             {{ quake.magnitude }}
           </span>
           <div class="flex-1 min-w-0">
-            <div class="text-[11px] font-mono text-mil-text truncate group-hover:text-mil-accent">{{ quake.place[:35] }}</div>
+            <div class="text-[11px] font-mono text-mil-text truncate group-hover:text-mil-accent">{{ quake.place[:35] }}
+            </div>
             <div class="text-[9px] font-mono text-mil-muted">{{ quake.date }} {{ quake.time }}</div>
           </div>
         </a>
         {% endfor %}
       </div>
       {% else %}
-      <div class="text-[10px] font-mono text-mil-muted p-4 text-center border border-mil-border bg-mil-dark/30">NO SIGNIFICANT ACTIVITY</div>
+      <div class="text-[10px] font-mono text-mil-muted p-4 text-center border border-mil-border bg-mil-dark/30">NO
+        SIGNIFICANT ACTIVITY</div>
       {% endif %}
     </div>
 
@@ -66,13 +68,13 @@
     <div class="lg:col-span-2">
       <div class="flex items-center gap-2 mb-3">
         <i class="fa-solid fa-triangle-exclamation text-mil-accent text-xs"></i>
-        <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">GDACS DISASTER ALERTS</span>
+        <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">GDACS DISASTER
+          ALERTS</span>
       </div>
       {% if threats.disasters %}
       <div class="grid md:grid-cols-2 gap-2">
         {% for alert in threats.disasters[:4] %}
-        <a href="{{ alert.link }}" target="_blank" rel="noopener"
-           class="block p-3 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group
+        <a href="{{ alert.link }}" target="_blank" rel="noopener" class="block p-3 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group
              {% if alert.alert_level == 'red' %}border-l-2 border-l-red-500
              {% elif alert.alert_level == 'orange' %}border-l-2 border-l-orange-500
              {% else %}border-l-2 border-l-green-500{% endif %}">
@@ -85,19 +87,22 @@
             </span>
             <span class="text-[8px] font-mono uppercase text-mil-muted">{{ alert.event_type | upper }}</span>
           </div>
-          <div class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent line-clamp-2">{{ alert.title }}</div>
+          <div class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent line-clamp-2">{{ alert.title }}
+          </div>
         </a>
         {% endfor %}
       </div>
       {% else %}
-      <div class="text-[10px] font-mono text-mil-muted p-4 text-center border border-mil-border bg-mil-dark/30">NO ACTIVE ALERTS</div>
+      <div class="text-[10px] font-mono text-mil-muted p-4 text-center border border-mil-border bg-mil-dark/30">NO
+        ACTIVE ALERTS</div>
       {% endif %}
     </div>
   </div>
 
   <!-- Footer -->
   <div class="mt-4 pt-3 border-t border-mil-border flex items-center justify-between">
-    <span class="text-[8px] font-mono text-mil-muted uppercase tracking-wider">DATA: USGS EARTHQUAKE HAZARDS / UN GDACS</span>
+    <span class="text-[8px] font-mono text-mil-muted uppercase tracking-wider">DATA: USGS EARTHQUAKE HAZARDS / UN
+      GDACS</span>
     <span class="text-[8px] font-mono text-mil-muted uppercase tracking-wider">REFRESH: 2 MIN</span>
   </div>
 </div>

@@ -2,10 +2,11 @@
 <div class="shiny-border p-4">
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-shield-halved text-mil-accent"></i>
-      <span class="text-[10px] font-mono uppercase tracking-wider text-mil-muted">Pi-hole</span>
+      <i class="fa-solid fa-shield-halved text-mil-accent text-xs"></i>
+      <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">Pi-hole</span>
     </div>
-    <span class="text-[9px] font-mono uppercase px-2 py-0.5 {% if pihole.status == 'enabled' %}bg-mil-success/20 text-mil-success{% else %}bg-mil-error/20 text-mil-error{% endif %}">
+    <span
+      class="text-[9px] font-mono uppercase px-2 py-0.5 {% if pihole.status == 'enabled' %}bg-mil-success/20 text-mil-success{% else %}bg-mil-error/20 text-mil-error{% endif %}">
       {{ pihole.status | upper }}
     </span>
   </div>
@@ -35,7 +36,8 @@
   <div class="mt-4 pt-4 border-t border-mil-border">
     <div class="flex justify-between text-[9px] font-mono text-mil-muted">
       <span>Domains on blocklist: {{ "{:,.0f}".format(pihole.domains_blocked) }}</span>
-      <span>Gravity: {% if pihole.gravity_last_updated != 'N/A' %}{{ pihole.gravity_last_updated }}d ago{% else %}Unknown{% endif %}</span>
+      <span>Gravity: {% if pihole.gravity_last_updated != 'N/A' %}{{ pihole.gravity_last_updated }}d ago{% else
+        %}Unknown{% endif %}</span>
     </div>
   </div>
 
@@ -63,8 +65,11 @@
     {% if pihole.diagnosis_items %}
     <div class="space-y-1 max-h-24 overflow-y-auto">
       {% for item in pihole.diagnosis_items[:5] %}
-      <div class="text-[8px] font-mono {% if item.type == 'error' %}text-mil-error{% else %}text-yellow-500{% endif %} truncate" title="{{ item.message }}">
-        <i class="fa-solid {% if item.type == 'error' %}fa-circle-xmark{% else %}fa-triangle-exclamation{% endif %} mr-1"></i>
+      <div
+        class="text-[8px] font-mono {% if item.type == 'error' %}text-mil-error{% else %}text-yellow-500{% endif %} truncate"
+        title="{{ item.message }}">
+        <i
+          class="fa-solid {% if item.type == 'error' %}fa-circle-xmark{% else %}fa-triangle-exclamation{% endif %} mr-1"></i>
         {{ item.message | truncate(60) }}
       </div>
       {% endfor %}

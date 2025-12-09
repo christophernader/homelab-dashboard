@@ -2,10 +2,11 @@
 <div class="shiny-border p-4">
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-gauge-high text-mil-accent"></i>
-      <span class="text-[10px] font-mono uppercase tracking-wider text-mil-muted">Speedtest</span>
+      <i class="fa-solid fa-gauge-high text-mil-accent text-xs"></i>
+      <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">Speedtest</span>
     </div>
-    <span class="text-[9px] font-mono uppercase px-2 py-0.5 {% if speedtest.status == 'connected' %}bg-mil-success/20 text-mil-success{% else %}bg-mil-error/20 text-mil-error{% endif %}">
+    <span
+      class="text-[9px] font-mono uppercase px-2 py-0.5 {% if speedtest.status == 'connected' %}bg-mil-success/20 text-mil-success{% else %}bg-mil-error/20 text-mil-error{% endif %}">
       {{ speedtest.status | upper }}
     </span>
   </div>

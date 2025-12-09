@@ -1,5 +1,5 @@
 <div class="h-72 p-4 bg-mil-card shiny-border overflow-hidden flex flex-col">
-  <div class="flex items-center justify-between mb-3 flex-shrink-0">
+  <div class="flex items-center justify-between mb-4 flex-shrink-0">
     <div class="flex items-center gap-2">
       <i class="fa-brands fa-y-combinator text-mil-accent text-xs"></i>
       <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-mil-muted">HACKER NEWS</span>
@@ -10,8 +10,9 @@
   <div class="flex-1 overflow-y-auto space-y-2 pr-1 intel-feed">
     {% for story in news[:10] %}
     <a href="{{ story.url }}" target="_blank" rel="noopener"
-       class="feed-item block p-2 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group">
-      <div class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent line-clamp-2 leading-relaxed">{{ story.title }}</div>
+      class="feed-item block p-2 bg-mil-dark/30 border border-mil-border hover:border-mil-accent transition-colors group">
+      <div class="text-[11px] font-mono text-mil-text group-hover:text-mil-accent line-clamp-2 leading-relaxed">{{
+        story.title }}</div>
       <div class="flex items-center gap-3 mt-1.5 text-[9px] font-mono text-mil-muted">
         <span class="flex items-center gap-1">
           <i class="fa-solid fa-arrow-up text-mil-accent/60"></i>
